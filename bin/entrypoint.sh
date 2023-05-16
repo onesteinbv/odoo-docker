@@ -51,17 +51,6 @@ else
     /odoo/scripts/run.sh
   fi
 
-  if [[ -n "$ADMIN_USER_PWD" ]]; then
-    python /odoo/scripts/change_password.py -d $DB_NAME --log-level=error --login admin --password "$ADMIN_USER_PWD"
-  fi
-
-  if [[ -n "$SMTP_HOST" ]]; then
-    python /odoo/scripts/setup_smtp.py -d $DB_NAME --log-level=error --host "$SMTP_HOST" --user "$SMTP_USER" --password "$SMTP_PASSWORD"
-  fi
-
-  python /odoo/scripts/update_company.py -d $DB_NAME --log-level=error --name "$COMPANY_NAME" --email "$COMPANY_EMAIL" --coc "$COMPANY_COC" --city "$COMPANY_CITY" --zip "$COMPANY_ZIP" --street "$COMPANY_STREET"
-  python /odoo/scripts/prepare_curq_user.py -d $DB_NAME --log-level=error --email "$COMPANY_EMAIL" --group-file /odoo/scripts/groups.txt
-
 fi
 
 if [ -z "${NOGOSU:-}" ] ; then
