@@ -60,7 +60,7 @@ else
   fi
 
   python /odoo/scripts/update_company.py -d $DB_NAME --log-level=error --name "$COMPANY_NAME" --email "$COMPANY_EMAIL" --coc "$COMPANY_COC" --city "$COMPANY_CITY" --zip "$COMPANY_ZIP" --street "$COMPANY_STREET"
-  python /odoo/scripts/prepare_curq_user.py -d $DB_NAME --log-level=error --email "$COMPANY_EMAIL" --group-file /odoo/custom/groups.txt
+  python /odoo/scripts/prepare_curq_user.py -d $DB_NAME --log-level=error --email "$COMPANY_EMAIL" --group-file /odoo/scripts/groups.txt
 
 fi
 
