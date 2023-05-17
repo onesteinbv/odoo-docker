@@ -1,7 +1,7 @@
 FROM ghcr.io/acsone/odoo-bedrock:16.0-py310-latest
 
 COPY ./custom/odoo /odoo/src/odoo
-RUN apt-get update && apt-get install gcc python3-dev -y --no-install-recommends
+RUN apt-get update && apt-get install gcc python3-dev git -y --no-install-recommends
 RUN \
   pip install --no-cache-dir \
     -r /odoo/src/odoo/requirements.txt \
