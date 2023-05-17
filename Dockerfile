@@ -12,7 +12,7 @@ COPY ./package /odoo/custom
 COPY ./requirements.txt ./custom/requirements.tx[t] /odoo/custom/
 RUN pip install --no-cache-dir -r /odoo/custom/requirements.txt
 RUN pip install click-odoo-contrib
-COPY ./custom/script[s]/* /odoo/scripts/
+COPY ./custom/scripts/* /odoo/scripts/
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 ENV ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/custom
