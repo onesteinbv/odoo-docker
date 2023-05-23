@@ -1,4 +1,4 @@
-FROM ghcr.io/acsone/odoo-bedrock:16.0-py310-latest
+FROM onestein/odoo-bedrock:16.0
 
 COPY ./custom/odoo /odoo/src/odoo
 RUN apt-get update && apt-get install gcc python3-dev git -y --no-install-recommends
