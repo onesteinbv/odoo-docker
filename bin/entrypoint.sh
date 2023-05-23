@@ -49,6 +49,8 @@ else
 
   if [ -f "/odoo/scripts/run.sh" ]; then
     /odoo/scripts/run.sh
+  else
+    echo "/odoo/scripts/run.sh not found; skipping";
   fi
 
 fi
