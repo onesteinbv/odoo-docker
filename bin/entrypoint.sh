@@ -22,19 +22,13 @@ if [ ! "$(stat -c '%U' /data/odoo)" = "odoo" ]; then
   chown -R odoo: /data/odoo
 fi
 
-if [ -z "${NOGOSU:-}" ] ; then
-  echo "Starting with UID: $USER_ID"
-fi
+echo "Starting with UID: $USER_ID"
 
 BASE_CMD=$(basename $1)
 if [ "$BASE_CMD" = "odoo" ] || [ "$BASE_CMD" = "odoo.py" ] || [ "$BASE_CMD" = "odoo-bin" ] || [ "$BASE_CMD" = "openerp-server" ] ; then
   START_ENTRYPOINT_DIR=/odoo/start-entrypoint.d
   if [ -d "$START_ENTRYPOINT_DIR" ]; then
-    if [ -z "${NOGOSU:-}" ] ; then
-      gosu odoo run-parts --verbose "$START_ENTRYPOINT_DIR"
-    else
-      run-parts --verbose "$START_ENTRYPOINT_DIR"
-    fi
+    gosu odoo run-parts --verbose "$START_ENTRYPOINT_DIR"
   fi
 fi
 
@@ -44,8 +38,8 @@ elif [[ -z "$MODULES" ]]; then
   echo "No MODULES environment variable";
 else
   # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo (acsone) don't support uninstalling modules. 
-  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1
-  click-odoo-update -c $ODOO_RC -d $DB_NAME
+  gosu odoo click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1
+  gosu odoo click-odoo-update -c $ODOO_RC -d $DB_NAME
 
   if [ -f "/odoo/scripts/run.sh" ]; then
     /odoo/scripts/run.sh
@@ -55,8 +49,4 @@ else
 
 fi
 
-if [ -z "${NOGOSU:-}" ] ; then
-  exec gosu odoo "$@"
-else
-  exec "$@"
-fi
+exec gosu odoo "$@"
