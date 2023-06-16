@@ -17,10 +17,6 @@ export PGUSER=${DB_USER}
 export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
 
-if [ ! "$(stat -c '%U' /data/odoo)" = "odoo" ]; then
-  chown -R odoo: /data/odoo
-fi
-
 echo "Starting with UID: $USER_ID"
 
 BASE_CMD=$(basename $1)
