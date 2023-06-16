@@ -17,7 +17,6 @@ export PGUSER=${DB_USER}
 export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
 
-mkdir -p /data/odoo/{addons,filestore,sessions}
 if [ ! "$(stat -c '%U' /data/odoo)" = "odoo" ]; then
   chown -R odoo: /data/odoo
 fi
