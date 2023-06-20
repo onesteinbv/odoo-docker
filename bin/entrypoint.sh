@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 # Test
-find /data/odoo
+find /data
 
 # allow to customize the UID of the odoo user,
 # so we can share the same than the host's.
