@@ -18,6 +18,11 @@ export PGUSER=${DB_USER}
 export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
 
+# Make sure the odoo dir belongs to odoo (not needed?)
+if [ ! "$(stat -c '%U' /odoo)" = "odoo" ]; then
+  chown odoo: /odoo
+fi
+
 echo "Starting with UID: $USER_ID"
 
 BASE_CMD=$(basename $1)
