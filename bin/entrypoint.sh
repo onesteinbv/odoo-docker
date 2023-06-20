@@ -9,6 +9,7 @@ find /odoo/data
 # If no user id is set, we use 999
 USER_ID=${LOCAL_USER_ID:-999}
 
+# TODO: Use dockerize?
 sudo confd -log-level=warn -onetime -backend ${CONFD_BACKEND:-env} ${CONFD_OPTS:-}
 
 # TODO this could (should?) be sourced from file(s) under confd control
