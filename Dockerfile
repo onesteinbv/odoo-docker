@@ -2,7 +2,7 @@ FROM onestein/odoo-bedrock:16.0
 ARG USER_ID=999
 
 COPY ./custom/odoo /odoo/src/odoo
-RUN apt-get update && apt-get install gcc python3-dev git openssh-client -y --no-install-recommends
+RUN apt-get update && apt-get install gcc python3-dev git openssh-client sudo -y --no-install-recommends
 RUN \
   pip install --no-cache-dir \
     -r /odoo/src/odoo/requirements.txt \
@@ -13,7 +13,7 @@ COPY ./package /odoo/custom
 COPY ./requirements.txt ./custom/requirements.tx[t] /odoo/custom/
 RUN pip install --no-cache-dir -r /odoo/custom/requirements.txt
 RUN pip install click-odoo-contrib
-RUN useradd --shell /bin/bash -u $USER_ID -o -c "" -m odoo
+RUN useradd --disabled-password --shell /bin/bash -u $USER_ID -o -c "" -m odoo
 COPY ./custom/scripts/ /odoo/scripts/
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
