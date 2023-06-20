@@ -9,9 +9,7 @@ find /data
 # If no user id is set, we use 999
 USER_ID=${LOCAL_USER_ID:-999}
 
-id -u odoo &> /dev/null || useradd --shell /bin/bash -u $USER_ID -o -c "" -m odoo
-
-confd -log-level=warn -onetime -backend ${CONFD_BACKEND:-env} ${CONFD_OPTS:-}
+gosu root confd -log-level=warn -onetime -backend ${CONFD_BACKEND:-env} ${CONFD_OPTS:-}
 
 # TODO this could (should?) be sourced from file(s) under confd control
 export PGHOST=${DB_HOST}
@@ -21,7 +19,7 @@ export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
 
 if [ ! "$(stat -c '%U' /data/odoo)" = "odoo" ]; then
-  chown -R odoo: /data/odoo
+  gosu root chown -R odoo: /data/odoo
 fi
 
 echo "Starting with UID: $USER_ID"
