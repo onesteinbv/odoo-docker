@@ -10,6 +10,7 @@ USER_ID=${LOCAL_USER_ID:-999}
 TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
 if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
+  echo "Dockerize...";
   dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
 fi
 find /odoo
