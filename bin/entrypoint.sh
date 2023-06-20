@@ -1,6 +1,9 @@
 #!/bin/bash
 set -Eeuo pipefail
 
+# Test
+find /data
+
 # allow to customize the UID of the odoo user,
 # so we can share the same than the host's.
 # If no user id is set, we use 999
