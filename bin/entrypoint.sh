@@ -1,9 +1,6 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-# Test
-find /odoo/data
-
 # allow to customize the UID of the odoo user,
 # so we can share the same than the host's.
 # If no user id is set, we use 999
@@ -15,6 +12,8 @@ CONFIG_TARGET=/odoo/odoo.cfg
 if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
   dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
 fi
+find /odoo
+ls -l /odoo
 
 # TODO this could (should?) be sourced from file(s) under confd control
 export PGHOST=${DB_HOST}
