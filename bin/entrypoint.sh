@@ -1,16 +1,27 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-# Test
-find /odoo/data
-
 # allow to customize the UID of the odoo user,
 # so we can share the same than the host's.
 # If no user id is set, we use 999
 USER_ID=${LOCAL_USER_ID:-999}
 
-# TODO: Use dockerize?
-sudo confd -log-level=warn -onetime -backend ${CONFD_BACKEND:-env} ${CONFD_OPTS:-}
+# Create configuration file from the template
+TEMPLATES_DIR=/templates
+CONFIG_TARGET=/odoo/odoo.cfg
+if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
+  echo "Dockerize...";
+  sleep 10000
+  dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  # Verify
+  if [ ! -e $CONFIG_TARGET ]; then
+    echo "Dockerize failed"
+    exit 1
+  fi
+else
+  echo "No template for odoo.conf found"
+  exit 1
+fi
 
 # TODO this could (should?) be sourced from file(s) under confd control
 export PGHOST=${DB_HOST}
@@ -19,11 +30,6 @@ export PGUSER=${DB_USER}
 export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
 
-# Make sure the odoo dir belongs to odoo (not needed?)
-if [ -e "/odoo" ]; then
-  chown odoo: /odoo
-fi
-
 echo "Starting with UID: $USER_ID"
 
 # TODO: We don't care about this we use click-odoo. Can be removed
@@ -31,7 +37,7 @@ BASE_CMD=$(basename $1)
 if [ "$BASE_CMD" = "odoo" ] || [ "$BASE_CMD" = "odoo.py" ] || [ "$BASE_CMD" = "odoo-bin" ] || [ "$BASE_CMD" = "openerp-server" ] ; then
   START_ENTRYPOINT_DIR=/odoo/start-entrypoint.d
   if [ -d "$START_ENTRYPOINT_DIR" ]; then
-    gosu odoo run-parts --verbose "$START_ENTRYPOINT_DIR"
+    run-parts --verbose "$START_ENTRYPOINT_DIR"
   fi
 fi
 
@@ -42,8 +48,8 @@ elif [[ -z "$MODULES" ]]; then
 else
   # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo (acsone) don't support uninstalling modules.
   echo "Init / update database";
-  gosu odoo click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1
-  gosu odoo click-odoo-update -c $ODOO_RC -d $DB_NAME
+  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1
+  click-odoo-update -c $ODOO_RC -d $DB_NAME
 
   if [ -f "/odoo/scripts/run.sh" ]; then
     /odoo/scripts/run.sh
@@ -53,4 +59,4 @@ else
 
 fi
 
-exec gosu odoo "$@"
+exec "$@"
