@@ -25,6 +25,7 @@ fi
 
 echo "Starting with UID: $USER_ID"
 
+# TODO: We don't care about this we use click-odoo. Can be removed
 BASE_CMD=$(basename $1)
 if [ "$BASE_CMD" = "odoo" ] || [ "$BASE_CMD" = "odoo.py" ] || [ "$BASE_CMD" = "odoo-bin" ] || [ "$BASE_CMD" = "openerp-server" ] ; then
   START_ENTRYPOINT_DIR=/odoo/start-entrypoint.d
