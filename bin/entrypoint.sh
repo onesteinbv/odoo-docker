@@ -19,7 +19,7 @@ export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
 
 # Make sure the odoo dir belongs to odoo (not needed?)
-if [ ! "$(stat -c '%U' /odoo)" = "odoo" ]; then
+if [ -e "/odoo" ]; then
   chown odoo: /odoo
 fi
 
