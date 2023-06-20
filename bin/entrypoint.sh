@@ -9,8 +9,12 @@ find /odoo/data
 # If no user id is set, we use 999
 USER_ID=${LOCAL_USER_ID:-999}
 
-# TODO: Use dockerize?
-sudo confd -log-level=warn -onetime -backend ${CONFD_BACKEND:-env} ${CONFD_OPTS:-}
+# Create configuration file from the template
+TEMPLATES_DIR=/templates
+CONFIG_TARGET=/odoo/odoo.cfg
+if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
+  dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+fi
 
 # TODO this could (should?) be sourced from file(s) under confd control
 export PGHOST=${DB_HOST}
