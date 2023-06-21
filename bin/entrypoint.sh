@@ -13,9 +13,14 @@ CONFIG_TARGET=/odoo/odoo.cfg
 if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
   echo "Dockerize...";
   dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  # Verify
+  if [ ! -e $CONFIG_TARGET ]; then
+     echo "Dockerize failed"
+     exit 1
+else
+  echo "No template for odoo.conf found"
+  exit 1
 fi
-find /odoo
-ls -l /odoo
 
 # TODO this could (should?) be sourced from file(s) under confd control
 export PGHOST=${DB_HOST}
