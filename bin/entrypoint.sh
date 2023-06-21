@@ -7,7 +7,6 @@ set -Eeuo pipefail
 USER_ID=${LOCAL_USER_ID:-999}
 
 # Create configuration file from the template
-ls -l /templates
 TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
 if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
