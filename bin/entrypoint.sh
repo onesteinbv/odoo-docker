@@ -15,8 +15,9 @@ if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
   dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
   # Verify
   if [ ! -e $CONFIG_TARGET ]; then
-     echo "Dockerize failed"
-     exit 1
+    echo "Dockerize failed"
+    exit 1
+  fi
 else
   echo "No template for odoo.conf found"
   exit 1
