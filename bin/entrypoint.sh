@@ -30,11 +30,6 @@ export PGUSER=${DB_USER}
 export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
 
-# Make sure the odoo dir belongs to odoo (not needed?)
-#if [ -e "/odoo" ]; then
-#  chown odoo: /odoo
-#fi
-
 echo "Starting with UID: $USER_ID"
 
 # TODO: We don't care about this we use click-odoo. Can be removed
