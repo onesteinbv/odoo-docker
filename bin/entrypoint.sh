@@ -19,7 +19,7 @@ if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
   fi
 else
   echo "No template for odoo.conf found"
-  exit 1
+  sleep 1000000
 fi
 
 # TODO this could (should?) be sourced from file(s) under confd control
