@@ -13,7 +13,6 @@ COPY ./package /odoo/custom
 COPY ./requirements.txt ./custom/requirements.tx[t] /odoo/custom/
 RUN pip install --no-cache-dir -r /odoo/custom/requirements.txt
 RUN pip install click-odoo-contrib
-RUN adduser --disabled-password --shell /bin/bash -u $USER_ID --gecos "" odoo
 COPY ./custom/scripts/ /odoo/scripts/
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
