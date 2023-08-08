@@ -4,14 +4,12 @@ set -Eeuo pipefail
 # allow to customize the UID of the odoo user,
 # so we can share the same than the host's.
 # If no user id is set, we use 999
-USER_ID=${LOCAL_USER_ID:-999}
 
 # Create configuration file from the template
 TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
 if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
   echo "Dockerize...";
-  sleep 10000
   dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
   # Verify
   if [ ! -e $CONFIG_TARGET ]; then
@@ -29,8 +27,6 @@ export PGPORT=${DB_PORT:-5432}
 export PGUSER=${DB_USER}
 export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
-
-echo "Starting with UID: $USER_ID"
 
 # TODO: We don't care about this we use click-odoo. Can be removed
 BASE_CMD=$(basename $1)
