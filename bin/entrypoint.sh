@@ -11,7 +11,6 @@ TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
 if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
   echo "Dockerize...";
-  sleep 10000
   dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
   # Verify
   if [ ! -e $CONFIG_TARGET ]; then
