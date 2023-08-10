@@ -44,7 +44,7 @@ elif [[ -z "$MODULES" ]]; then
 else
   # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo (acsone) don't support uninstalling modules.
   echo "Init / update database";
-  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1
+  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --log-level $LOG_LEVEL
   click-odoo-update -c $ODOO_RC -d $DB_NAME
 
   if [ -f "/odoo/scripts/run.sh" ]; then
