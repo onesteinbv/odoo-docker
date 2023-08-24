@@ -5,6 +5,17 @@ set -Eeuo pipefail
 # so we can share the same than the host's.
 # If no user id is set, we use 999
 
+# Chown /odoo/data/odoo directory (in case of docker without k8s)
+if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then  # Just to be sure I don't break k8s stuff
+  echo "Chown /odoo/data/odoo"
+  chown -R odoo:odoo /odoo/data  # Test
+  if [ ! -d "/odoo/data/odoo" ]; then
+    mkdir "/odoo/data/odoo"
+  fi
+  chown -R odoo:odoo /odoo/data/odoo
+  su -c odoo
+fi
+
 # Create configuration file from the template
 TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
@@ -19,17 +30,6 @@ if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
 else
   echo "No template for odoo.conf found"
   exit 1
-fi
-
-# Chown /odoo/data/odoo directory (in case of docker without k8s)
-if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then  # Just to be sure I don't break k8s stuff
-  echo "Chown /odoo/data/odoo"
-  chown -R odoo:odoo /odoo/data  # Test
-  if [ ! -d "/odoo/data/odoo" ]; then
-    mkdir "/odoo/data/odoo"
-  fi
-  chown -R odoo:odoo /odoo/data/odoo
-  su -c odoo
 fi
 
 # TODO this could (should?) be sourced from file(s) under confd control
