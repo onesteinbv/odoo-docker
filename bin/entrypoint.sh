@@ -13,7 +13,7 @@ if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then  # Just to be sure I don't br
     mkdir "/odoo/data/odoo"
   fi
   chown -R odoo:odoo /odoo/data/odoo
-  su -c odoo
+  su odoo
 fi
 
 # Create configuration file from the template
