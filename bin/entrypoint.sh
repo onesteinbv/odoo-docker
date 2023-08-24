@@ -21,6 +21,12 @@ else
   exit 1
 fi
 
+# Chown /odoo/data/odoo folder (in case of docker without k8s)
+if [ ! -d "/odoo/data/odoo" ]; then
+  mkdir "/odoo/data/odoo"
+fi
+chown -R odoo:odoo /odoo/data/odoo
+
 # TODO this could (should?) be sourced from file(s) under confd control
 export PGHOST=${DB_HOST}
 export PGPORT=${DB_PORT:-5432}
