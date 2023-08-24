@@ -21,7 +21,7 @@ else
   exit 1
 fi
 
-# Chown /odoo/data/odoo folder (in case of docker without k8s)
+# Chown /odoo/data/odoo directory (in case of docker without k8s)
 if [ ! -d "/odoo/data/odoo" ]; then
   mkdir "/odoo/data/odoo"
 fi
