@@ -4,13 +4,28 @@ set -Eeuo pipefail
 # allow to customize the UID of the odoo user,
 # so we can share the same than the host's.
 # If no user id is set, we use 999
+# TODO: Big cleanup
+
+# Chown /odoo/data/odoo directory (in case of docker without k8s)
+if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then  # Just to be sure I don't break k8s stuff
+  echo "Chown /odoo/data/odoo"
+  chown -R odoo:odoo /odoo/data  # Test
+  if [ ! -d "/odoo/data/odoo" ]; then
+    mkdir "/odoo/data/odoo"
+  fi
+  chown -R odoo:odoo /odoo/data/odoo
+fi
 
 # Create configuration file from the template
 TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
 if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
   echo "Dockerize...";
-  dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+    gosu odoo dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  else
+    dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  fi
   # Verify
   if [ ! -e $CONFIG_TARGET ]; then
     echo "Dockerize failed"
@@ -28,15 +43,6 @@ export PGUSER=${DB_USER}
 export PGPASSWORD=${DB_PASSWORD}
 export PGDATABASE=${DB_NAME}
 
-# TODO: We don't care about this we use click-odoo. Can be removed
-BASE_CMD=$(basename $1)
-if [ "$BASE_CMD" = "odoo" ] || [ "$BASE_CMD" = "odoo.py" ] || [ "$BASE_CMD" = "odoo-bin" ] || [ "$BASE_CMD" = "openerp-server" ] ; then
-  START_ENTRYPOINT_DIR=/odoo/start-entrypoint.d
-  if [ -d "$START_ENTRYPOINT_DIR" ]; then
-    run-parts --verbose "$START_ENTRYPOINT_DIR"
-  fi
-fi
-
 if [[ -z "$DB_NAME" || "$DB_NAME" == "False" ]]; then
   echo "No DB_NAME environment variable: Skipping update";
 elif [[ -z "$MODULES" ]]; then
@@ -44,15 +50,28 @@ elif [[ -z "$MODULES" ]]; then
 else
   # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo (acsone) don't support uninstalling modules.
   echo "Init / update database";
-  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
-  click-odoo-update -c $ODOO_RC -d $DB_NAME
+  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+    gosu odoo click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+    gosu odoo click-odoo-update -c $ODOO_RC -d $DB_NAME
+  else
+    click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+    click-odoo-update -c $ODOO_RC -d $DB_NAME
+  fi
 
   if [ -f "/odoo/scripts/run.sh" ]; then
-    /odoo/scripts/run.sh
+    if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+      gosu odoo /odoo/scripts/run.sh
+    else
+      /odoo/scripts/run.sh
+    fi
   else
     echo "/odoo/scripts/run.sh not found; skipping";
   fi
 
 fi
 
-exec "$@"
+if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+  exec gosu odoo "$@"
+else
+  exec "$@"
+fi
