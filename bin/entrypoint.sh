@@ -22,10 +22,12 @@ else
 fi
 
 # Chown /odoo/data/odoo directory (in case of docker without k8s)
-if [ ! -d "/odoo/data/odoo" ]; then
-  mkdir "/odoo/data/odoo"
+if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then  # Just to be sure I don't break k8s stuff
+  if [ ! -d "/odoo/data/odoo" ]; then
+    mkdir "/odoo/data/odoo"
+  fi
+  chown -R odoo:odoo /odoo/data/odoo
 fi
-chown -R odoo:odoo /odoo/data/odoo
 
 # TODO this could (should?) be sourced from file(s) under confd control
 export PGHOST=${DB_HOST}
