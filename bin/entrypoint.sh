@@ -29,6 +29,7 @@ if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then  # Just to be sure I don't br
     mkdir "/odoo/data/odoo"
   fi
   chown -R odoo:odoo /odoo/data/odoo
+  su -c odoo
 fi
 
 # TODO this could (should?) be sourced from file(s) under confd control
