@@ -21,7 +21,11 @@ TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
 if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
   echo "Dockerize...";
-  dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+    gosu odoo dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  else
+    dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  fi
   # Verify
   if [ ! -e $CONFIG_TARGET ]; then
     echo "Dockerize failed"
