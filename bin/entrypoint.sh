@@ -49,12 +49,14 @@ elif [[ -z "$MODULES" ]]; then
   echo "No MODULES environment variable";
 else
   # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo (acsone) don't support uninstalling modules.
-  echo "Init / update database";
+  echo "Init database";
   if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
     gosu odoo click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+    echo "Update database";
     gosu odoo click-odoo-update -c $ODOO_RC -d $DB_NAME
   else
     click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+    echo "Update database";
     click-odoo-update -c $ODOO_RC -d $DB_NAME
   fi
 
