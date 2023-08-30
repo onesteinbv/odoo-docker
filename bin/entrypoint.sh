@@ -43,7 +43,7 @@ fi
 #export PGPASSWORD=${DB_PASSWORD}
 #export PGDATABASE=${DB_NAME}
 
-if [[ -z "$DB_NAME" || "$DB_NAME" == "False" ]]; then
+if [[ -z "$DB_NAME" || "$DB_NAME" == "False" || "$DB_NAME" == ".*" ]]; then
   echo "No DB_NAME environment variable: Skipping update";
 elif [[ -z "$MODULES" ]]; then
   echo "No MODULES environment variable";
