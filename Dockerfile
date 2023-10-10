@@ -2,7 +2,7 @@ FROM onestein/odoo-bedrock:16.0
 ARG USER_ID=999
 
 COPY ./custom/odoo /odoo/src/odoo
-RUN apt-get update && apt-get install gcc python3-dev git openssh-client -y --no-install-recommends
+RUN apt-get update && apt-get install gcc python3-dev git openssh-client postgresql-client-13 -y --no-install-recommends
 RUN \
   pip install --no-cache-dir \
     -r /odoo/src/odoo/requirements.txt \
