@@ -52,15 +52,24 @@ else
   echo "Init database";
   if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
     gosu odoo click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+    if [ -f "/odoo/scripts/pre-update.sh" ]; then
+      echo "Run /odoo/scripts/pre-update.sh";
+      gosu odoo /odoo/scripts/pre-update.sh
+    fi
     echo "Update database";
     gosu odoo click-odoo-update -c $ODOO_RC -d $DB_NAME
   else
     click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+    if [ -f "/odoo/scripts/pre-update.sh" ]; then
+      echo "Run /odoo/scripts/pre-update.sh";
+      /odoo/scripts/pre-update.sh
+    fi
     echo "Update database";
     click-odoo-update -c $ODOO_RC -d $DB_NAME
   fi
 
   if [ -f "/odoo/scripts/run.sh" ]; then
+    echo "Run /odoo/scripts/run.sh";
     if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
       gosu odoo /odoo/scripts/run.sh
     else
