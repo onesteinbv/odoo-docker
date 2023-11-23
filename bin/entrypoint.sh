@@ -51,18 +51,34 @@ else
   # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo (acsone) don't support uninstalling modules.
   echo "Init database";
   if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+    if [ -f "/odoo/scripts/pre-init.sh" ]; then
+      echo "Run /odoo/scripts/pre-init.sh";
+      gosu odoo /odoo/scripts/pre-init.sh
+    else
+      echo "/odoo/scripts/pre-init.sh not found; skipping";
+    fi
     gosu odoo click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
     if [ -f "/odoo/scripts/pre-update.sh" ]; then
       echo "Run /odoo/scripts/pre-update.sh";
       gosu odoo /odoo/scripts/pre-update.sh
+    else
+      echo "/odoo/scripts/pre-update.sh not found; skipping";
     fi
     echo "Update database";
     gosu odoo click-odoo-update -c $ODOO_RC -d $DB_NAME
   else
+    if [ -f "/odoo/scripts/pre-init.sh" ]; then
+      echo "Run /odoo/scripts/pre-init.sh";
+      /odoo/scripts/pre-init.sh
+    else
+      echo "/odoo/scripts/pre-init.sh not found; skipping";
+    fi
     click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
     if [ -f "/odoo/scripts/pre-update.sh" ]; then
       echo "Run /odoo/scripts/pre-update.sh";
       /odoo/scripts/pre-update.sh
+    else
+      echo "/odoo/scripts/pre-update.sh not found; skipping";
     fi
     echo "Update database";
     click-odoo-update -c $ODOO_RC -d $DB_NAME
