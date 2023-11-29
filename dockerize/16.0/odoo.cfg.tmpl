@@ -49,3 +49,15 @@ proxy_mode = True
 ; smtp_user = False
 unaccent = {{ default .Env.UNACCENT "False" }}
 {{ default .Env.ADDITIONAL_ODOO_RC "" }}
+
+{{ if isTrue (default .Env.S3_ENABLED "false") }}
+[fs_storage.s3]
+protocol=s3
+options={"endpoint_url": "{{ .Env.S3_ENDPOINT_URL }}", "key": "{{ .Env.S3_ACCESS_KEY }}", "secret": "{{ .Env.S3_SECRET_KEY }}"}
+directory_path={{ .Env.S3_BUCKET }}
+use_as_default_for_attachments=True
+use_filename_obfuscation=True
+force_db_for_default_attachment_rules={"image/": 51200, "application/javascript": 0, "text/css": 0}
+base_url=/
+autovacuum_gc=True
+{{ end }}
