@@ -50,7 +50,7 @@ proxy_mode = True
 unaccent = {{ default .Env.UNACCENT "False" }}
 {{ default .Env.ADDITIONAL_ODOO_RC "" }}
 
-{{ if isTrue .Env.S3_ENABLED }}
+{{ if isTrue default .Env.S3_ENABLED "false" }}
 [fs_storage.fsprod]
 protocol=s3
 options={"endpoint_url": "{{ .Env.S3_ENDPOINT_URL }}", "key": "{{ .Env.S3_ACCESS_KEY }}", "secret": "{{ .Env.S3_SECRET_KEY }}"}
