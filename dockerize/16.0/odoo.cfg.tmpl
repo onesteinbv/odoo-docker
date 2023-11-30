@@ -57,4 +57,7 @@ options={"endpoint_url": "{{ .Env.S3_ENDPOINT_URL }}", "key": "{{ .Env.S3_ACCESS
 directory_path={{ .Env.S3_BUCKET }}
 use_as_default_for_attachments=True
 use_filename_obfuscation=True
+force_db_for_default_attachment_rules={"image/": 51200, "application/javascript": 0, "text/css": 0}
+base_url=/
+autovacuum_gc=True
 {{ end }}
