@@ -51,7 +51,7 @@ unaccent = {{ default .Env.UNACCENT "False" }}
 {{ default .Env.ADDITIONAL_ODOO_RC "" }}
 
 {{ if isTrue (default .Env.S3_ENABLED "false") }}
-[fs_storage.fsprod]
+[fs_storage.s3]
 protocol=s3
 options={"endpoint_url": "{{ .Env.S3_ENDPOINT_URL }}", "key": "{{ .Env.S3_ACCESS_KEY }}", "secret": "{{ .Env.S3_SECRET_KEY }}"}
 directory_path={{ .Env.S3_BUCKET }}
