@@ -60,4 +60,12 @@ use_filename_obfuscation=True
 force_db_for_default_attachment_rules={"image/": 51200, "application/javascript": 0, "text/css": 0}
 base_url=/
 autovacuum_gc=True
+{{ if isTrue (default .Env.S3_BACKUP "false") }}
+use_for_backup=True
+backup_include_filestore={{ default .Env.S3_BACKUP_INCLUDE_FILESTORE "False" }}
+backup_keep_time={{ default .Env.S3_BACKUP_KEEP_TIME "7" }}
+backup_dir={{ default .Env.S3_BACKUP_DIR "backups" }}
+backup_filename_format={{ default .Env.S3_BACKUP_FILENAME_FORMAT "backup-%(db)s-%(dt)s.%(ext)s" }}
+{{ end }}
+
 {{ end }}
