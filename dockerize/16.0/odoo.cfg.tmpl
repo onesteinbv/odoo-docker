@@ -5,7 +5,7 @@ auto_reload = False
 db_template = {{ default .Env.DB_TEMPLATE "template1" }}
 db_host = {{ .Env.DB_HOST }}
 db_port = {{ default .Env.DB_PORT "5432" }}
-{{ if (default .Env.LIST_DB "False") == "False" }}
+{{ if eq (default .Env.LIST_DB "False") "False" }}
 db_name = {{ .Env.DB_NAME }}
 {{ else }}
 db_name = False
