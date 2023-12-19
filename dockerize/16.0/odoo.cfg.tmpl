@@ -9,7 +9,11 @@ db_name = {{ .Env.DB_NAME }}
 db_user = {{ .Env.DB_USER }}
 db_password = {{ .Env.DB_PASSWORD }}
 db_sslmode = {{ default .Env.DB_SSLMODE "prefer" }}
+{{ if eq (default .Env.LIST_DB "False") "False" }}
 dbfilter = ^{{ default .Env.DB_NAME "main" }}$
+{{ else }}
+dbfilter = ^{{ .Env.DB_FILTER }}$
+{{ end }}
 list_db = {{ default .Env.LIST_DB "False" }}
 admin_passwd = {{ default .Env.ADMIN_PASSWD "" }}
 db_maxconn = {{ default .Env.DB_MAXCONN "64" }}
