@@ -1,104 +1,183 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-# allow to customize the UID of the odoo user,
-# so we can share the same than the host's.
-# If no user id is set, we use 999
-# TODO: Big cleanup
+# Create configuration file from the template
+TEMPLATES_DIR=/templates
+CONFIG_TARGET=/odoo/odoo.cfg
 
-# Chown /odoo/data/odoo directory (in case of docker without k8s)
-if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then  # Just to be sure I don't break k8s stuff
+function WithCorrectUser() {
+  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+    gosu odoo "$@"
+  else
+    "$@"
+  fi
+}
+
+function SetDockerFileStorePermissions() {
+  # Make the Odoo user the owner of the filestore
   echo "Chown /odoo/data/odoo"
   chown -R odoo:odoo /odoo/data  # Test
   if [ ! -d "/odoo/data/odoo" ]; then
     mkdir "/odoo/data/odoo"
   fi
   chown -R odoo:odoo /odoo/data/odoo
-fi
+}
 
-# Create configuration file from the template
-TEMPLATES_DIR=/templates
-CONFIG_TARGET=/odoo/odoo.cfg
-if [ -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
-  echo "Dockerize...";
-  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-    gosu odoo dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
-  else
-    dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+
+function CreateConfigFile() {
+    # Check if a config template file exists.
+  if [ -z $TEMPLATES_DIR ]; then
+    echo "Template folder not defined."
+    exit 1
   fi
-  # Verify
+  if [ ! -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
+    echo "Template file does not exist."
+    exit 1
+  fi
+
+  # Create a config file.
+  echo "Creating Odoo configuration file...";
+  WithCorrectUser dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+
+  # Check that a config file was created.
   if [ ! -e $CONFIG_TARGET ]; then
     echo "Dockerize failed"
     exit 1
   fi
-else
-  echo "No template for odoo.conf found"
-  exit 1
-fi
+}
 
-# TODO this could (should?) be sourced from file(s) under confd control
-#export PGHOST=${DB_HOST}
-#export PGPORT=${DB_PORT:-5432}
-#export PGUSER=${DB_USER}
-#export PGPASSWORD=${DB_PASSWORD}
-#export PGDATABASE=${DB_NAME}
 
-if [[ -z "$DB_NAME" || "$DB_NAME" == "False" || "$DB_NAME" == ".*" ]]; then
-  echo "No DB_NAME environment variable: Skipping update";
-elif [[ -z "$MODULES" ]]; then
-  echo "No MODULES environment variable";
-else
-  # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo (acsone) don't support uninstalling modules.
-  echo "Init database";
-  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-    if [ -f "/odoo/scripts/pre-init.sh" ]; then
-      echo "Run /odoo/scripts/pre-init.sh";
-      gosu odoo /odoo/scripts/pre-init.sh
-    else
-      echo "/odoo/scripts/pre-init.sh not found; skipping";
+function CheckDb() {
+  # Check that the database environment variable exists.
+  # Pass "Strict" as the first function parameter to indicate that the function
+  # should exit providing an error code if the DB_NAME variable is set or valid.
+  if [[ -z "$DB_NAME" || "$DB_NAME" == "False" || "$DB_NAME" == ".*" ]]; then
+    echo "No valid DB_NAME environment variable.";
+    if [[ $1 == "Strict" ]]; then
+      exit 1
     fi
-    gosu odoo click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
-    if [ -f "/odoo/scripts/pre-update.sh" ]; then
-      echo "Run /odoo/scripts/pre-update.sh";
-      gosu odoo /odoo/scripts/pre-update.sh
+  fi
+}
+
+function CheckModules() {
+  # Check that the modules environment variable exists.
+  # Pass "Strict" as the first function parameter to indicate that the function
+  # should exit providing an error code if the MODULES variable is not set.
+  if [[ -z "$MODULES" ]]; then
+    echo "No MODULES environment variable.";
+    if [[ $1 == "Strict" ]]; then
+      exit 1
     else
-      echo "/odoo/scripts/pre-update.sh not found; skipping";
+      MODULES="all";
     fi
-    echo "Update database";
-    gosu odoo click-odoo-update -c $ODOO_RC -d $DB_NAME
+  fi
+}
+
+function InstallOdoo() {
+  # Initialize a new database if it doesn't exist yet.
+  # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo
+  # (acsone) don't support uninstalling modules.
+  echo "Running pre-init script...";
+  if [ -f "/odoo/scripts/pre-init.sh" ]; then
+    echo "Running /odoo/scripts/pre-init.sh...";
+    WithCorrectUser /odoo/scripts/pre-init.sh
+    echo "Completed pre-init script."
   else
-    if [ -f "/odoo/scripts/pre-init.sh" ]; then
-      echo "Run /odoo/scripts/pre-init.sh";
-      /odoo/scripts/pre-init.sh
-    else
-      echo "/odoo/scripts/pre-init.sh not found; skipping";
-    fi
-    click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
-    if [ -f "/odoo/scripts/pre-update.sh" ]; then
-      echo "Run /odoo/scripts/pre-update.sh";
-      /odoo/scripts/pre-update.sh
-    else
-      echo "/odoo/scripts/pre-update.sh not found; skipping";
-    fi
-    echo "Update database";
-    click-odoo-update -c $ODOO_RC -d $DB_NAME
+    echo "Pre-init script /odoo/scripts/pre-init.sh not found; skipping";
   fi
 
+  echo "Initializing database '$DB_NAME'...";
+  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+  echo "Initialization complete."
+}
+
+function UpdateOdoo() {
+  # Update the Odoo modules that have changed since the last update.
+  echo "Running pre-update script...";
+  if [ -f "/odoo/scripts/pre-update.sh" ]; then
+    echo "Running /odoo/scripts/pre-update.sh";
+    WithCorrectUser /odoo/scripts/pre-update.sh
+    echo "Completed pre-update script."
+  else
+    echo "/odoo/scripts/pre-update.sh not found; skipping";
+  fi
+
+  echo "Updating database '$DB_NAME'...";
+  click-odoo-update -c $ODOO_RC -d $DB_NAME
+  echo "Update complete."
+}
+
+function PerformMaintenance() {
+  # Run maintenance operations
   if [ -f "/odoo/scripts/run.sh" ]; then
-    echo "Run /odoo/scripts/run.sh";
-    if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-      gosu odoo /odoo/scripts/run.sh
-    else
-      /odoo/scripts/run.sh
-    fi
+    echo "Running maintenance script...";
+    WithCorrectUser /odoo/scripts/run.sh
+    echo "Maintenance script complete."
   else
-    echo "/odoo/scripts/run.sh not found; skipping";
+    echo "Maintenance script not found; skipping maintenance.";
   fi
+}
 
+if [[ -z "$MODE" ]]; then
+  MODE="InstallAndRun"
 fi
 
-if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-  exec gosu odoo "$@"
-else
-  exec "$@"
-fi
+case $MODE in
+
+  "InstallOnly")
+    echo "Installing Odoo..."
+    if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+      SetDockerFileStorePermissions
+    fi
+    CreateConfigFile
+    CheckDb
+    CheckModules Strict
+    InstallOdoo
+    PerformMaintenance
+    ;;
+
+  "UpdateOnly")
+    echo "Updating Odoo..."
+    CreateConfigFile
+    CheckDb Strict
+    CheckModules
+    UpdateOdoo
+    PerformMaintenance
+    ;;
+
+  "RunOnly")
+    echo "Running Odoo..."
+    CreateConfigFile
+    CheckDb Strict
+    WithCorrectUser "$@"
+    ;;
+
+  "InstallAndRun")
+    echo "Installing and running Odoo..."
+    if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+      SetDockerFileStorePermissions
+    fi
+    CreateConfigFile
+    CheckDb
+    CheckModules Strict
+    InstallOdoo
+    UpdateOdoo
+    PerformMaintenance
+    WithCorrectUser "$@"
+    ;;
+
+  "UpdateAndRun")
+    echo "Updating and running Odoo..."
+    CreateConfigFile
+    CheckDb Strict
+    CheckModules
+    UpdateOdoo
+    PerformMaintenance
+    WithCorrectUser "$@"
+    ;;
+
+  *)
+    echo "Unknown operation. Exiting..."
+    exit 1
+    ;;
+esac

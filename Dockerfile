@@ -1,4 +1,5 @@
 FROM docker.io/ubuntu:22.04
+# FROM --platform=linux/arm64 docker.io/ubuntu:22.04
 MAINTAINER Onestein
 
 ARG PYTHONBIN=python3.10
@@ -43,8 +44,12 @@ RUN chown -R odoo:odoo /odoo
 ENV OPENERP_SERVER=/odoo/odoo.cfg
 ENV ODOO_RC=/odoo/odoo.cfg
 
-COPY ./custom/odoo /odoo/src/odoo
 RUN apt-get update && apt-get install gcc python3-dev git openssh-client postgresql-client-13 -y --no-install-recommends
+
+# Below is needed on ARM64 systems (eg Apple Silicon)
+# RUN apt-get install libldap2-dev libsasl2-dev libpq-dev g++ -y --no-install-recommends
+
+COPY ./custom/odoo /odoo/src/odoo
 RUN \
   pip install --no-cache-dir \
     -r /odoo/src/odoo/requirements.txt \
