@@ -118,11 +118,7 @@ function PerformMaintenance() {
   fi
 }
 
-if [[ -z "$MODE" ]]; then
-  MODE="InstallAndRun"
-fi
-
-case $MODE in
+case ${MODE:-"InstallAndRun"} in
 
   "InstallOnly")
     echo "Installing Odoo..."
