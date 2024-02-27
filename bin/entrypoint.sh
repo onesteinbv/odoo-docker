@@ -118,7 +118,7 @@ function PerformMaintenance() {
   fi
 }
 
-case ${MODE:-"InstallAndRun"} in
+case ${MODE:="InstallAndRun"} in
 
   "InstallOnly")
     echo "Installing Odoo..."
@@ -173,7 +173,7 @@ case ${MODE:-"InstallAndRun"} in
     ;;
 
   *)
-    echo "Unknown operation. Exiting..."
+    echo "Unknown operation '$MODE'. Exiting..."
     exit 1
     ;;
 esac
