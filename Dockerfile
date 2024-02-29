@@ -26,8 +26,7 @@ RUN set -x \
   && /tmp/install/pgdg.sh \
   && /tmp/install/dockerize.sh \
   && /tmp/install/arm64.sh \
-  && /tmp/install/post-install-clean.sh \
-  && rm -r /tmp/install
+  && /tmp/install/post-install-clean.sh
 
 # isolate from system python libraries
 RUN set -x \
@@ -44,6 +43,10 @@ ENV OPENERP_SERVER=/odoo/odoo.cfg
 ENV ODOO_RC=/odoo/odoo.cfg
 
 COPY ./custom/odoo /odoo/src/odoo
+RUN set -x \
+  && /tmp/install/arm64-odoo-requirements.sh \
+  && rm -r /tmp/install
+
 RUN \
   pip install --no-cache-dir \
     -r /odoo/src/odoo/requirements.txt \
