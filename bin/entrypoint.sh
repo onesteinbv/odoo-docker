@@ -198,13 +198,14 @@ function WaitForReadyState() {
   done
 }
 
+if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+  SetDockerFileStorePermissions
+fi
+
 case ${MODE:="InstallAndRun"} in
 
   "InstallOnly")
     echo "Installing Odoo..."
-    if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-      SetDockerFileStorePermissions
-    fi
     CreateConfigFile
     CheckModules Strict
     CheckDb
@@ -232,9 +233,6 @@ case ${MODE:="InstallAndRun"} in
 
   "InstallAndRun")
     echo "Installing and running Odoo..."
-    if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-      SetDockerFileStorePermissions
-    fi
     CreateConfigFile
     CheckModules Strict
     CheckDb
