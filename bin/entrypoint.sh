@@ -46,14 +46,22 @@ function CreateConfigFile() {
   fi
 }
 
-
 function CheckDb() {
   # Check that the database environment variable exists.
   # Pass "Strict" as the first function parameter to indicate that the function
   # should exit providing an error code if the DB_NAME variable is set or valid.
+  STRICT=false
+  if [[ "$#" -gt  0 ]]; then
+    STRICT="$1"
+  fi
   if [[ -z "$DB_NAME" || "$DB_NAME" == "False" || "$DB_NAME" == ".*" ]]; then
     echo "No valid DB_NAME environment variable.";
-    if [[ $1 == "Strict" ]]; then
+    if [[ $STRICT == "Strict" ]]; then
+      exit 1
+    fi
+  elif [[ $(CheckDbState) == "Not existing" ]]; then
+    echo "Database $DB_NAME does not exist.";
+    if [[ $STRICT == "Strict" ]]; then
       exit 1
     fi
   fi
@@ -137,32 +145,36 @@ function CheckDbState() {
   RESULT="$(PGPASSWORD=$DB_PASSWORD psql -XtA -U $DB_USER -h $DB_HOST -d postgres -c "SELECT 1 FROM pg_database WHERE datname='$DB_NAME';")"
   if [ "$RESULT" != '1' ]
   then
-      echo "To install"
+      echo "Not existing"
+  else
+      echo "Existing"
   fi
 }
 
 function EnsureInstallationTableExists() {
   RESULT="$(PGPASSWORD=$DB_PASSWORD psql -XtA -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
-  "SELECT to_regclass('onestein_installation');")"
-  if [ "$RESULT" != 'onestein_installation' ]
+  "SELECT to_regclass('curq_state_history');")"
+  if [ "$RESULT" != 'curq_state_history' ]
   then
       PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
-      "CREATE TABLE onestein_installation (id SERIAL PRIMARY KEY, state VARCHAR(255), write_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);" >/dev/null
+      "CREATE TABLE curq_state_history (id SERIAL PRIMARY KEY, state VARCHAR(255), write_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);" >/dev/null
       WriteState "Created"
   fi
 }
 
 function WriteState() {
   PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
-  "INSERT INTO onestein_installation (state) VALUES ('$(echo "$1" | sed "s|'|''|g")');" >/dev/null
+  "INSERT INTO curq_state_history (state) VALUES ('$(echo "$1" | sed "s|'|''|g")');" >/dev/null
 }
 
 function GetState() {
-  echo "$(PGPASSWORD=$DB_PASSWORD psql -XtA -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
-  "SELECT state, DATE_PART('minute', CURRENT_TIMESTAMP - write_date)::integer AS delta_t FROM onestein_installation ORDER BY write_date DESC LIMIT 1")"
+  PGPASSWORD=$DB_PASSWORD psql -XtA -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
+  "SELECT state, DATE_PART('minute', CURRENT_TIMESTAMP - write_date)::integer AS delta_t FROM curq_state_history ORDER BY write_date DESC LIMIT 1"
 }
 
 function WaitForReadyState() {
+  EnsureInstallationTableExists
+
   RESULT=$(GetState)
   IFS='|' read -ra ARRAY_RESULT <<<"$RESULT" ; declare -p ARRAY_RESULT >/dev/null
   OPERATION="${ARRAY_RESULT[0]}"
@@ -186,12 +198,6 @@ function WaitForReadyState() {
   done
 }
 
-WaitForPostgres
-DB_STATE="$(CheckDbState)"
-if [[ $DB_STATE != "To install" ]]; then
-  EnsureInstallationTableExists
-fi
-
 case ${MODE:="InstallAndRun"} in
 
   "InstallOnly")
@@ -200,8 +206,8 @@ case ${MODE:="InstallAndRun"} in
       SetDockerFileStorePermissions
     fi
     CreateConfigFile
-    CheckDb
     CheckModules Strict
+    CheckDb
     InstallOdoo
     PerformMaintenance
     ;;
@@ -209,9 +215,9 @@ case ${MODE:="InstallAndRun"} in
   "UpdateOnly")
     echo "Updating Odoo..."
     CreateConfigFile
+    CheckModules
     CheckDb Strict
     WaitForReadyState
-    CheckModules
     UpdateOdoo
     PerformMaintenance
     ;;
@@ -230,8 +236,8 @@ case ${MODE:="InstallAndRun"} in
       SetDockerFileStorePermissions
     fi
     CreateConfigFile
-    CheckDb
     CheckModules Strict
+    CheckDb
     InstallOdoo
     UpdateOdoo
     PerformMaintenance
@@ -241,9 +247,9 @@ case ${MODE:="InstallAndRun"} in
   "UpdateAndRun")
     echo "Updating and running Odoo..."
     CreateConfigFile
+    CheckModules
     CheckDb Strict
     WaitForReadyState
-    CheckModules
     UpdateOdoo
     PerformMaintenance
     WithCorrectUser "$@"
