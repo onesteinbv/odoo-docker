@@ -157,8 +157,8 @@ function EnsureInstallationTableExists() {
   if [ "$RESULT" != 'curq_state_history' ]
   then
       PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
-      "CREATE TABLE curq_state_history (id SERIAL PRIMARY KEY, state VARCHAR(255), write_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);" >/dev/null
-      WriteState "Created"
+      "CREATE TABLE curq_state_history (id SERIAL PRIMARY KEY, state VARCHAR(255), write_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP); CREATE INDEX write_date_idx ON curq_state_history (write_date);" >/dev/null
+      WriteState "Creating"
   fi
 }
 
@@ -175,13 +175,14 @@ function GetState() {
 function WaitForReadyState() {
   EnsureInstallationTableExists
 
+  TIMEOUT=30
   RESULT=$(GetState)
   IFS='|' read -ra ARRAY_RESULT <<<"$RESULT" ; declare -p ARRAY_RESULT >/dev/null
   OPERATION="${ARRAY_RESULT[0]}"
   MINUTES_SINCE_LAST_UPDATE="${ARRAY_RESULT[1]}"
 
   while [[ $OPERATION != "Ready" && $OPERATION != "Reset" ]]; do
-    if [[ $MINUTES_SINCE_LAST_UPDATE -gt 10 ]]; then
+    if [[ $MINUTES_SINCE_LAST_UPDATE -gt $TIMEOUT ]]; then
       echo "Timeout on update loop. Resetting installation status and restarting container..."
       WriteState "Reset"
       unset PGPASSWORD
