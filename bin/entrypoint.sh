@@ -172,18 +172,42 @@ function GetState() {
   "SELECT state, DATE_PART('minute', CURRENT_TIMESTAMP - write_date)::integer AS delta_t FROM curq_state_history ORDER BY write_date DESC LIMIT 1"
 }
 
+function ForceReadyState() {
+  EnsureInstallationTableExists
+  RESULT=$(GetState)
+  IFS='|' read -ra ARRAY_RESULT <<<"$RESULT" ; declare -p ARRAY_RESULT >/dev/null
+  OPERATION="${ARRAY_RESULT[0]}"
+  if [[ $OPERATION != "Ready" && $OPERATION != "Reset" && $OPERATION != "Force Ready" ]]; then
+    WriteState "Force Ready"
+  fi
+}
+
+function AbortIfNotReady() {
+  EnsureInstallationTableExists
+  echo "Checking readiness..."
+  RESULT=$(GetState)
+  IFS='|' read -ra ARRAY_RESULT <<<"$RESULT" ; declare -p ARRAY_RESULT >/dev/null
+  OPERATION="${ARRAY_RESULT[0]}"
+  MINUTES_SINCE_LAST_UPDATE="${ARRAY_RESULT[1]}"
+
+  if [[ $OPERATION != "Ready" && $OPERATION != "Reset" && $OPERATION != "Force Ready" ]]; then
+    echo "Database is not ready. Aborting action."
+    exit 1
+  fi
+}
+
 function WaitForReadyState() {
   EnsureInstallationTableExists
-
+  echo "Waiting for readiness..."
   TIMEOUT=30
   RESULT=$(GetState)
   IFS='|' read -ra ARRAY_RESULT <<<"$RESULT" ; declare -p ARRAY_RESULT >/dev/null
   OPERATION="${ARRAY_RESULT[0]}"
   MINUTES_SINCE_LAST_UPDATE="${ARRAY_RESULT[1]}"
 
-  while [[ $OPERATION != "Ready" && $OPERATION != "Reset" ]]; do
+  while [[ $OPERATION != "Ready" && $OPERATION != "Reset" && $OPERATION != "Force Ready" ]]; do
     if [[ $MINUTES_SINCE_LAST_UPDATE -gt $TIMEOUT ]]; then
-      echo "Timeout on update loop. Resetting installation status and restarting container..."
+      echo "Timeout on readiness check. Resetting installation status and restarting container..."
       WriteState "Reset"
       unset PGPASSWORD
       exit 1
@@ -197,6 +221,7 @@ function WaitForReadyState() {
     OPERATION="${ARRAY_RESULT[0]}"
     MINUTES_SINCE_LAST_UPDATE="${ARRAY_RESULT[1]}"
   done
+  echo "Ready for use."
 }
 
 if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
@@ -211,6 +236,8 @@ case ${MODE:="InstallAndRun"} in
     CheckModules Strict
     CheckDb
     InstallOdoo
+    AbortIfNotReady
+    UpdateOdoo
     PerformMaintenance
     ;;
 
@@ -219,7 +246,7 @@ case ${MODE:="InstallAndRun"} in
     CreateConfigFile
     CheckModules
     CheckDb Strict
-    WaitForReadyState
+    AbortIfNotReady
     UpdateOdoo
     PerformMaintenance
     ;;
@@ -252,6 +279,37 @@ case ${MODE:="InstallAndRun"} in
     UpdateOdoo
     PerformMaintenance
     WithCorrectUser "$@"
+    ;;
+
+  "ForceRunOnly")
+    echo "Waiting 30 seconds before forcing run...."
+    sleep 30
+    echo "Running Odoo (forced)..."
+    CreateConfigFile
+    CheckDb Strict
+    ForceReadyState
+    WithCorrectUser "$@"
+    ;;
+
+  "ForceUpdateOnly")
+    echo "Waiting 30 seconds before forcing update..."
+    sleep 30
+    echo "Updating Odoo (forced)..."
+    CreateConfigFile
+    CheckModules
+    CheckDb Strict
+    ForceReadyState
+    UpdateOdoo
+    PerformMaintenance
+    ;;
+
+  "ForceReadyState")
+    echo "Waiting 30 seconds before forcing Ready state..."
+    sleep 30
+    echo "Forcing Ready State..."
+    CreateConfigFile
+    CheckDb Strict
+    ForceReadyState
     ;;
 
   *)
