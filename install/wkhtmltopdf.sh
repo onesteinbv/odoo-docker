@@ -2,10 +2,10 @@
 set -eo pipefail
 
 arch=`uname -m`
-if [[ $arch = "aarch64" ]]; then
+if [[ $arch == "aarch64" ]]; then
   arch="arm64"
 fi
-if [[ $arch = "arm64" ]]; then
+if [[ $arch == "arm64" ]]; then
   # Run a local wkhtmltopdf version
   apt-get install -y --no-install-recommends wkhtmltopdf
 else
