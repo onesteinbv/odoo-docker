@@ -65,6 +65,9 @@ function CheckDb() {
       exit 1
     fi
   fi
+  if [[ $STRICT == "NoExists" ]]; then
+     echo "Database $DB_NAME exists."
+  fi
 }
 
 function CheckModules() {
@@ -230,13 +233,27 @@ fi
 
 case ${MODE:="InstallAndRun"} in
 
+  "Init")
+    echo "Initializing Odoo..."
+    CreateConfigFile
+    DB_EXISTS=$(CheckDb NoExists)
+    if [[ $DB_EXISTS == "Database $DB_NAME exists." ]]; then
+      echo "A database was already found. No init necessary."
+      exit 0
+    fi
+    CheckModules Strict
+    InstallOdoo
+    AbortIfNotReady
+    UpdateOdoo
+    PerformMaintenance
+    ;;
+
   "InstallOnly")
     echo "Installing Odoo..."
     CreateConfigFile
     CheckModules Strict
     CheckDb
     InstallOdoo
-    AbortIfNotReady
     UpdateOdoo
     PerformMaintenance
     ;;
