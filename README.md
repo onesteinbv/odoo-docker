@@ -33,11 +33,15 @@ are:
    not have a state table yet.
    **USE WITH CAUTION**. When the state table indicates Odoo is not ready, it's possible
    that another pod is installing/updating Odoo.
- - `ForceReadyState`: Sets the state to `Force Ready`, so that future running of any modes
-   acts as if the database is in Ready state. Does not update or run Odoo and quits
-   when done.
+ - `ForceReadyState`: Sets the state to `Force Ready`, so that future running of any 
+   modes acts as if the database is in Ready state. Does not update or run Odoo and 
+   quits when done.
    **USE WITH CAUTION**. When the state table indicates Odoo is not ready, it's possible
    that another pod is installing/updating Odoo.
+ - `Init`: Is the same as InstallOnly, but exits *without error* if the database already
+   exists. This mode is useful in an init container for a RunOnly mode container. If
+   the database already exists, the init container exits, and the run mode container
+   runs as normal.
 
 ### Possible database states
 The ready mechanism adds a table to the Odoo database called `curq_state_history`. This
@@ -93,4 +97,4 @@ container run will proceed.
 ## TODO
 
 * Install apt packages listed in a file like requirements.txt for pipy
-* Rebase on the official Odoo 16.0 image for faster installation?
+* Rebase on the official Odoo 16.0 image for smaller installation?
