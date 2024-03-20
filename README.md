@@ -12,7 +12,8 @@ are:
  - `InstallOnly` - installs all modules in the MODULES and SERVER_WIDE_MODULES, then 
    performs the operations in the maintenance script (`run.sh`), then quits the 
    container. This is meant for a fresh database.
- - `RunOnly` - Does no updating, simply runs Odoo.
+ - `RunOnly` - Does no updating, simply runs Odoo. This is the only way to run a 
+   deployment that has `LIST_DB` set to `"True"`.
  - `UpdateOnly` - updates all installed modules, then performs the operations in the
    maintenance script (`run.sh`) then quits the container. Can be used to update Odoo
    without downtime, provided no locks occur.
@@ -38,10 +39,15 @@ are:
    quits when done.
    **USE WITH CAUTION**. When the state table indicates Odoo is not ready, it's possible
    that another pod is installing/updating Odoo.
- - `Init`: Is the same as InstallOnly, but exits *without error* if the database already
-   exists. This mode is useful in an init container for a RunOnly mode container. If
-   the database already exists, the init container exits, and the run mode container
-   runs as normal.
+ - `Init`: Similar to Install, with a few differences:
+   - exits *without error* if the database already exists or if called using 
+     `LIST_DB="True"`. 
+   - runs using the admin user, so it can create databases and roles
+   - creates a user specifically for this installation. Normal web-exposed pods only
+     access using this user.
+   This mode is useful in an init container for a RunOnly mode container. If the 
+   database already exists, the init container exits, and the run mode container runs 
+   as normal. If not, the database is first initialized.
 
 ### Possible database states
 The ready mechanism adds a table to the Odoo database called `curq_state_history`. This
@@ -88,13 +94,14 @@ is executed, two records are created: the first one with the name
 of the state (`Updating`, `Creating`, `Maintenance`), and the second one when
 the work is completed (`Ready`).
 
-A running container will check the latest
-state, and if it's not `Ready` or `Reset`, will check when the last update happened. If
-that exceeds a timeout value, the container will add a `Reset` record, and will
-exit with an error, prompting a restart. If the state is `Ready` or `Reset`, the
-container run will proceed.
+A running container will check the latest state, and if it's not `Ready` or `Reset`, 
+will check when the last update happened. If that exceeds a timeout value, the 
+container will add a `Reset` record, and will exit with an error, prompting a restart. 
+If the state is `Ready` or `Reset`, the container run will proceed.
 
 ## TODO
 
 * Install apt packages listed in a file like requirements.txt for pipy
 * Rebase on the official Odoo 16.0 image for smaller installation?
+* Remove secrets (database name, service, user, password, etc) from env variables
+* For safety: use another db for the state history checks?
