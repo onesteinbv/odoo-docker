@@ -1,7 +1,6 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-# Create configuration file from the template
 TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
 
@@ -27,11 +26,11 @@ function SetDockerFileStorePermissions() {
 function CreateConfigFile() {
     # Check if a config template file exists.
   if [ -z $TEMPLATES_DIR ]; then
-    echo "Template folder not defined."
+    echo "Template folder not defined. Failing."
     exit 1
   fi
   if [ ! -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
-    echo "Template file does not exist."
+    echo "Template file does not exist. Failing."
     exit 1
   fi
 
@@ -41,21 +40,54 @@ function CreateConfigFile() {
 
   # Check that a config file was created.
   if [ ! -e $CONFIG_TARGET ]; then
-    echo "Dockerize failed"
+    echo "Dockerize failed. Failing."
     exit 1
   fi
 }
 
+function CheckDbVariable() {
+  if [[ -z $DB_NAME || $DB_NAME == "False" || $DB_NAME == ".*" ]]; then
+    echo "Invalid variable.";
+  fi
+}
 
+function CheckDbState() {
+  RESULT="$(PGPASSWORD="$DB_PASSWORD" psql -XtA -U "$DB_USER" -h "$DB_HOST" -d postgres -c "SELECT 1 FROM pg_database WHERE datname='$(echo "$DB_NAME" | sed "s|'|''|g")';")"
+  if [ "$RESULT" != '1' ]
+  then
+      echo "Not existing"
+  else
+      echo "Existing"
+  fi
+}
+
+# shellcheck disable=SC2120
 function CheckDb() {
-  # Check that the database environment variable exists.
-  # Pass "Strict" as the first function parameter to indicate that the function
-  # should exit providing an error code if the DB_NAME variable is set or valid.
-  if [[ -z "$DB_NAME" || "$DB_NAME" == "False" || "$DB_NAME" == ".*" ]]; then
-    echo "No valid DB_NAME environment variable.";
-    if [[ $1 == "Strict" ]]; then
+  if [[ ${LIST_DB:-"False"} == "True" ]]; then
+    return
+  fi
+
+  # If the user sets the "Strict" parameter, the function will error
+  # out if it finds any issue with the database.
+  STRICT=false
+  if [[ "$#" -gt  0 ]]; then
+    STRICT="$1"
+  fi
+  DB_NAME_CHECK=$(CheckDbVariable)
+  if [[ $DB_NAME_CHECK == "Invalid variable." ]]; then
+    if [[ $STRICT == "Strict" ]]; then
+      echo "Variable $DB_NAME is an invalid database name. Failing."
       exit 1
     fi
+    echo "Variable $DB_NAME is an invalid database name."
+  elif [[ $(CheckDbState) == "Not existing" ]]; then
+    if [[ $STRICT == "Strict" ]]; then
+      echo "Database $DB_NAME does not exist. Failing.";
+      exit 1
+    fi
+    echo "Database $DB_NAME does not exist.";
+  else
+     echo "Database $DB_NAME exists."
   fi
 }
 
@@ -88,12 +120,15 @@ function InstallOdoo() {
 
   echo "Initializing database '$DB_NAME'...";
   click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+  EnsureInstallationTableExists
+  WriteState "Ready"
   echo "Initialization complete."
 }
 
 function UpdateOdoo() {
   # Update the Odoo modules that have changed since the last update.
   echo "Running pre-update script...";
+  WriteState "Updating"
   if [ -f "/odoo/scripts/pre-update.sh" ]; then
     echo "Running /odoo/scripts/pre-update.sh";
     WithCorrectUser /odoo/scripts/pre-update.sh
@@ -104,6 +139,8 @@ function UpdateOdoo() {
 
   echo "Updating database '$DB_NAME'...";
   click-odoo-update -c $ODOO_RC -d $DB_NAME
+
+  WriteState "Ready"
   echo "Update complete."
 }
 
@@ -111,51 +148,224 @@ function PerformMaintenance() {
   # Run maintenance operations
   if [ -f "/odoo/scripts/run.sh" ]; then
     echo "Running maintenance script...";
+    WriteState "Maintenance"
     WithCorrectUser /odoo/scripts/run.sh
+    WriteState "Ready"
     echo "Maintenance script complete."
   else
     echo "Maintenance script not found; skipping maintenance.";
   fi
 }
 
+function WaitForPostgres() {
+  until pg_isready -h $DB_HOST -p $DB_PORT -t 5 >/dev/null
+  do
+    echo "Waiting for Postgres server $DB_HOST:$DB_PORT..."
+  done
+}
+
+function EnsureInstallationTableExists() {
+  RESULT="$(PGPASSWORD=$DB_PASSWORD psql -XtA -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
+  "SELECT to_regclass('curq_state_history');")"
+  if [ "$RESULT" != 'curq_state_history' ]
+  then
+      echo "State history table does not exist. Creating table..."
+      PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
+      "CREATE TABLE curq_state_history (id SERIAL PRIMARY KEY, state VARCHAR(255), write_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP); CREATE INDEX write_date_idx ON curq_state_history (write_date);" >/dev/null
+      echo "State history table created."
+      WriteState "Creating"
+  fi
+}
+
+function WriteState() {
+  STATE_TO_WRITE=$(echo "$1" | sed "s|'|''|g")
+  echo "Writing state '$STATE_TO_WRITE' to state history table..."
+  PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
+  "INSERT INTO curq_state_history (state) VALUES ('$STATE_TO_WRITE');" >/dev/null
+}
+
+function GetState() {
+  PGPASSWORD=$DB_PASSWORD psql -XtA -U $DB_USER -h $DB_HOST -d $DB_NAME -p $DB_PORT -c \
+  "SELECT state, DATE_PART('minute', CURRENT_TIMESTAMP - write_date)::integer AS delta_t FROM curq_state_history ORDER BY write_date DESC LIMIT 1"
+}
+
+function ForceReadyState() {
+  echo "Setting 'Force Ready' state..."
+  EnsureInstallationTableExists
+  RESULT=$(GetState)
+  IFS='|' read -ra ARRAY_RESULT <<<"$RESULT" ; declare -p ARRAY_RESULT >/dev/null
+  OPERATION="${ARRAY_RESULT[0]}"
+  if [[ $OPERATION != "Ready" && $OPERATION != "Reset" && $OPERATION != "Force Ready" ]]; then
+    WriteState "Force Ready"
+  fi
+  echo "'Force Ready' state set."
+}
+
+function AbortIfNotReady() {
+  EnsureInstallationTableExists
+  echo "Checking readiness..."
+  RESULT=$(GetState)
+  IFS='|' read -ra ARRAY_RESULT <<<"$RESULT" ; declare -p ARRAY_RESULT >/dev/null
+  OPERATION="${ARRAY_RESULT[0]}"
+  MINUTES_SINCE_LAST_UPDATE="${ARRAY_RESULT[1]}"
+
+  if [[ $OPERATION != "Ready" && $OPERATION != "Reset" && $OPERATION != "Force Ready" ]]; then
+    echo "Database is not ready. Failing."
+    exit 1
+  fi
+  echo "Database is ready."
+}
+
+function ExitIfListDb() {
+  if [[ ${LIST_DB:-"False"} != "False" ]]; then
+    if [[ $# -gt 0 && $1 == "Strict" ]]; then
+      echo "Mode '$MODE' does not allow LIST_DB being set. Failing."
+      exit 1
+    fi
+    echo "Mode '$MODE' requires no further action due to LIST_DB being set. Exiting."
+    exit 0
+  fi
+}
+
+function ExitIfDbExists() {
+  if [[ $(CheckDb) == "Database $DB_NAME exists." ]]; then
+    echo "Database $DB_NAME already exists. Exiting."
+    exit 0
+  fi
+}
+
+function WaitForReadyState() {
+  if [[ ${LIST_DB:-"False"} != "False" ]]; then
+    echo "Skipping readiness check as this is a LIST_DB container."
+    return
+  fi
+
+  echo "Waiting for readiness..."
+  if [[ $(CheckDbVariable) != "Invalid variable." ]]; then
+    EnsureInstallationTableExists
+
+    TIMEOUT=30
+    RESULT=$(GetState)
+    IFS='|' read -ra ARRAY_RESULT <<<"$RESULT" ; declare -p ARRAY_RESULT >/dev/null
+    OPERATION="${ARRAY_RESULT[0]}"
+    MINUTES_SINCE_LAST_UPDATE="${ARRAY_RESULT[1]}"
+
+    while [[ $OPERATION != "Ready" && $OPERATION != "Reset" && $OPERATION != "Force Ready" ]]; do
+      if [[ $MINUTES_SINCE_LAST_UPDATE -gt $TIMEOUT ]]; then
+        echo "Timeout on readiness check. Resetting installation status and restarting container..."
+        WriteState "Reset"
+        exit 1
+      fi
+
+      echo "Waiting for other installation to finish..."
+      sleep 10
+
+      RESULT="$(GetState)"
+      IFS='|' read -ra ARRAY_RESULT <<<$RESULT; declare -p ARRAY_RESULT >/dev/null
+      OPERATION="${ARRAY_RESULT[0]}"
+      MINUTES_SINCE_LAST_UPDATE="${ARRAY_RESULT[1]}"
+    done
+  fi
+  echo "Ready for use."
+}
+
+function EnsureDatabaseUser() {
+  ESCAPE_USER=$(echo -n "$DB_CLIENT_USER" | sed "s|'|''|g")
+  ESCAPE_PASSWORD=$(echo -n "$DB_CLIENT_PASSWORD" | sed "s|'|''|g")
+  cat << EOF | PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT >/dev/null
+DO
+\$\$
+BEGIN
+   IF EXISTS (
+      SELECT FROM pg_catalog.pg_roles
+      WHERE rolname = '$ESCAPE_USER') THEN
+      RAISE NOTICE 'Role "$ESCAPE_USER" already exists. Skipping.';
+   ELSE
+      BEGIN   -- nested block
+         CREATE ROLE "$ESCAPE_USER" WITH LOGIN PASSWORD '$ESCAPE_PASSWORD';
+      EXCEPTION
+         WHEN duplicate_object THEN
+            RAISE NOTICE 'Role "$ESCAPE_USER" was just created by a concurrent transaction. Skipping.';
+      END;
+   END IF;
+END
+\$\$;
+EOF
+}
+
+function GrantPrivileges() {
+  ESCAPE_USER=$(echo -n "$DB_CLIENT_USER" | sed "s|'|''|g")
+  cat << EOF | PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d $DB_NAME -h $DB_HOST -p $DB_PORT >/dev/null
+DO
+\$\$
+BEGIN
+  GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "$ESCAPE_USER";
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO "$ESCAPE_USER";
+END
+\$\$;
+EOF
+}
+
+if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+  SetDockerFileStorePermissions
+fi
+
 case ${MODE:="InstallAndRun"} in
 
-  "InstallOnly")
-    echo "Installing Odoo..."
-    if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-      SetDockerFileStorePermissions
-    fi
+  "Init")
+    echo "Initializing Odoo..."
+    ExitIfListDb
+    EnsureDatabaseUser
+    ExitIfDbExists
     CreateConfigFile
-    CheckDb
     CheckModules Strict
     InstallOdoo
+    UpdateOdoo
     PerformMaintenance
+    GrantPrivileges
+    echo "Complete. Exiting."
+    ;;
+
+  # Should not be used in K8s
+  "InstallOnly")
+    echo "Installing Odoo..."
+    ExitIfListDb Strict
+    CreateConfigFile
+    CheckModules Strict
+    CheckDb
+    InstallOdoo
+    UpdateOdoo
+    PerformMaintenance
+    echo "Complete. Exiting."
     ;;
 
   "UpdateOnly")
     echo "Updating Odoo..."
+    ExitIfListDb Strict
     CreateConfigFile
-    CheckDb Strict
     CheckModules
+    CheckDb Strict
+    AbortIfNotReady
     UpdateOdoo
     PerformMaintenance
+    echo "Complete. Exiting."
     ;;
 
   "RunOnly")
     echo "Running Odoo..."
     CreateConfigFile
     CheckDb Strict
+    WaitForReadyState
     WithCorrectUser "$@"
     ;;
 
+  # Should not be used in K8s
   "InstallAndRun")
     echo "Installing and running Odoo..."
-    if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-      SetDockerFileStorePermissions
-    fi
+    ExitIfListDb Strict
     CreateConfigFile
-    CheckDb
     CheckModules Strict
+    CheckDb
     InstallOdoo
     UpdateOdoo
     PerformMaintenance
@@ -164,12 +374,49 @@ case ${MODE:="InstallAndRun"} in
 
   "UpdateAndRun")
     echo "Updating and running Odoo..."
+    ExitIfListDb Strict
     CreateConfigFile
-    CheckDb Strict
     CheckModules
+    CheckDb Strict
+    WaitForReadyState
     UpdateOdoo
     PerformMaintenance
     WithCorrectUser "$@"
+    ;;
+
+  "ForceRunOnly")
+    ExitIfListDb Strict
+    echo "Waiting 30 seconds before forcing run...."
+    sleep 30
+    echo "Running Odoo (forced)..."
+    CreateConfigFile
+    CheckDb Strict
+    ForceReadyState
+    WithCorrectUser "$@"
+    ;;
+
+  "ForceUpdateOnly")
+    ExitIfListDb Strict
+    echo "Waiting 30 seconds before forcing update..."
+    sleep 30
+    echo "Updating Odoo (forced)..."
+    CreateConfigFile
+    CheckModules
+    CheckDb Strict
+    ForceReadyState
+    UpdateOdoo
+    PerformMaintenance
+    echo "Complete. Exiting."
+    ;;
+
+  "ForceReadyState")
+    ExitIfListDb Strict
+    echo "Waiting 30 seconds before setting ForceReady state..."
+    sleep 30
+    echo "Enforcing Ready state on database..."
+    CheckDb Strict
+    ForceReadyState
+    echo "Complete. Exiting."
     ;;
 
   *)
