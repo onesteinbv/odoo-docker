@@ -306,10 +306,14 @@ END
 EOF
 }
 
+function Encode() {
+  echo "$1" | sed -E -e 's/ /%20/g' -e 's/%/%26/g' -e 's/\//%2F/g' -e 's/:/%3A/g' -e 's/=/%3D/g' -e 's/\?/%3F/g' -e 's/@/%40/g' -e 's/\[/%5B/g' -e 's/\]/%5D/g' -e 's/\\/%5C/'
+}
+
 if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
   SetDockerFileStorePermissions
 fi
-export SESSION_DB_URI="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME"
+export SESSION_DB_URI="postgresql://$(Encode "$DB_USER"):$(Encode "$DB_PASSWORD")@$(Encode "$DB_HOST"):$(Encode "$DB_PORT")/$(Encode "$DB_NAME")"
 
 case ${MODE:="InstallAndRun"} in
 
