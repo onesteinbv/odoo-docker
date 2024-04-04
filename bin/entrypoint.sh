@@ -309,6 +309,7 @@ EOF
 if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
   SetDockerFileStorePermissions
 fi
+export SESSION_DB_URI="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME"
 
 case ${MODE:="InstallAndRun"} in
 
