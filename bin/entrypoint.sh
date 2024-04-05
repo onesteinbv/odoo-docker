@@ -295,12 +295,15 @@ EOF
 
 function GrantPrivileges() {
   ESCAPE_USER=$(echo -n "$DB_CLIENT_USER" | sed "s|'|''|g")
+
   cat << EOF | PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d $DB_NAME -h $DB_HOST -p $DB_PORT >/dev/null
 DO
 \$\$
 BEGIN
-  GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "$ESCAPE_USER";
-  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO "$ESCAPE_USER";
+  CREATE ROLE "${DB_NAME}_owner";
+  GRANT "${DB_NAME}_owner" TO "$DB_USER";
+  GRANT "${DB_NAME}_owner" TO "$ESCAPE_USER";
+  REASSIGN OWNED BY "$DB_USER" TO "${DB_NAME}_owner";
 END
 \$\$;
 EOF
