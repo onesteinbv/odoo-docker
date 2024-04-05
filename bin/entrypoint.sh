@@ -300,10 +300,10 @@ function GrantPrivileges() {
 DO
 \$\$
 BEGIN
-  CREATE ROLE "${DB_NAME}_owner";
-  GRANT "${DB_NAME}_owner" TO "$DB_USER";
-  GRANT "${DB_NAME}_owner" TO "$ESCAPE_USER";
-  REASSIGN OWNED BY "$DB_USER" TO "${DB_NAME}_owner";
+  CREATE ROLE "\"${DB_NAME}-owner\"";
+  GRANT "\"${DB_NAME}-owner\"" TO "\"$DB_USER\"";
+  GRANT "\"${DB_NAME}-owner\"" TO "\"$ESCAPE_USER\"";
+  REASSIGN OWNED BY "\"$DB_USER\"" TO "\"${DB_NAME}-owner\"";
 END
 \$\$;
 EOF
