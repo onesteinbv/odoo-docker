@@ -294,16 +294,12 @@ EOF
 }
 
 function GrantPrivileges() {
-  ESCAPE_USER=$(echo -n "$DB_CLIENT_USER" | sed "s|'|''|g")
-
   cat << EOF | PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d $DB_NAME -h $DB_HOST -p $DB_PORT >/dev/null
 DO
 \$\$
 BEGIN
-  CREATE ROLE "\"${DB_NAME}-owner\"";
-  GRANT "\"${DB_NAME}-owner\"" TO "\"$DB_USER\"";
-  GRANT "\"${DB_NAME}-owner\"" TO "\"$ESCAPE_USER\"";
-  REASSIGN OWNED BY "\"$DB_USER\"" TO "\"${DB_NAME}-owner\"";
+  EXECUTE FORMAT('GRANT "%s" TO "%s"', '${DB_CLIENT_USER}', '${DB_USER}');
+  EXECUTE FORMAT('REASSIGN OWNED BY "%s" TO "%s"', '$DB_USER', '${DB_CLIENT_USER}');
 END
 \$\$;
 EOF

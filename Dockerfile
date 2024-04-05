@@ -12,9 +12,6 @@ ENV \
   DEBIAN_FRONTEND=noninteractive \
   KWKHTMLTOPDF_SERVER_URL=http://kwkhtmltopdf
 
-# odoo config file
-COPY ./dockerize/${ODOO_VERSION} /templates
-
 COPY ./install /tmp/install
 RUN set -x \
   && /tmp/install/pre-install.sh \
@@ -58,6 +55,7 @@ COPY ./requirements.txt ./custom/requirements.tx[t] /odoo/custom/
 RUN pip install --no-cache-dir -r /odoo/custom/requirements.txt
 RUN pip install click-odoo-contrib
 COPY ./custom/scripts/ /odoo/scripts/
+COPY ./dockerize/${ODOO_VERSION} /templates
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 ENV ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/custom
