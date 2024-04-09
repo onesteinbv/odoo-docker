@@ -270,22 +270,20 @@ function WaitForReadyState() {
 }
 
 function EnsureDatabaseUser() {
-  ESCAPE_USER=$(echo -n "$DB_CLIENT_USER" | sed "s|'|''|g")
-  ESCAPE_PASSWORD=$(echo -n "$DB_CLIENT_PASSWORD" | sed "s|'|''|g")
   cat << EOF | PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d postgres -h $DB_HOST -p $DB_PORT >/dev/null
 DO
 \$\$
 BEGIN
    IF EXISTS (
       SELECT FROM pg_catalog.pg_roles
-      WHERE rolname = '$ESCAPE_USER') THEN
-      RAISE NOTICE 'Role "$ESCAPE_USER" already exists. Skipping.';
+      WHERE rolname = '$DB_CLIENT_USER') THEN
+      RAISE NOTICE 'Role "$DB_CLIENT_USER" already exists. Skipping.';
    ELSE
       BEGIN   -- nested block
-         CREATE ROLE "$ESCAPE_USER" WITH LOGIN PASSWORD '$ESCAPE_PASSWORD';
+         CREATE ROLE "$DB_CLIENT_USER" WITH LOGIN PASSWORD '$DB_CLIENT_PASSWORD';
       EXCEPTION
          WHEN duplicate_object THEN
-            RAISE NOTICE 'Role "$ESCAPE_USER" was just created by a concurrent transaction. Skipping.';
+            RAISE NOTICE 'Role "$DB_CLIENT_USER" was just created by a concurrent transaction. Skipping.';
       END;
    END IF;
 END
@@ -294,16 +292,16 @@ EOF
 }
 
 function GrantPrivileges() {
-  cat << EOF | PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d $DB_NAME -h $DB_HOST -p $DB_PORT >/dev/null
+  cat << EOF | PGPASSWORD="$DB_PASSWORD" psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT"
 DO
 \$\$
 BEGIN
-  EXECUTE FORMAT('GRANT CONNECT ON DATABASE "%s" TO cnpg_pooler_pgbouncer', '${DB_NAME}');
-  EXECUTE FORMAT('GRANT "%s" TO "%s"', '${DB_CLIENT_USER}', '${DB_USER}');
-  EXECUTE FORMAT('REASSIGN OWNED BY "%s" TO "%s"', '$DB_USER', '${DB_CLIENT_USER}');
-  EXECUTE FORMAT('CREATE OR REPLACE FUNCTION user_search(uname TEXT) RETURNS TABLE (usename name, passwd text) LANGUAGE sql SECURITY DEFINER AS ''SELECT usename, passwd FROM pg_shadow WHERE usename=\$1;''');
-  EXECUTE FORMAT('REVOKE ALL ON FUNCTION user_search(text) FROM public');
-  EXECUTE FORMAT('GRANT EXECUTE ON FUNCTION user_search(text) TO cnpg_pooler_pgbouncer');
+  EXECUTE FORMAT('GRANT CONNECT ON DATABASE "%s" TO cnpg_pooler_pgbouncer', '$DB_NAME');
+  EXECUTE FORMAT('GRANT "%s" TO "%s"', '$DB_CLIENT_USER', '$DB_USER');
+  EXECUTE FORMAT('REASSIGN OWNED BY "%s" TO "%s"', '$DB_USER', '$DB_CLIENT_USER');
+  CREATE OR REPLACE FUNCTION user_search(uname TEXT) RETURNS TABLE (usename name, passwd text) LANGUAGE sql SECURITY DEFINER AS 'SELECT usename, passwd FROM pg_shadow WHERE usename=\$1;';
+  REVOKE ALL ON FUNCTION user_search(text) FROM public;
+  GRANT EXECUTE ON FUNCTION user_search(text) TO cnpg_pooler_pgbouncer;
 END
 \$\$;
 EOF
