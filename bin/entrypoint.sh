@@ -298,8 +298,12 @@ function GrantPrivileges() {
 DO
 \$\$
 BEGIN
+  EXECUTE FORMAT('GRANT CONNECT ON DATABASE "%s" TO cnpg_pooler_pgbouncer', '${DB_NAME}');
   EXECUTE FORMAT('GRANT "%s" TO "%s"', '${DB_CLIENT_USER}', '${DB_USER}');
   EXECUTE FORMAT('REASSIGN OWNED BY "%s" TO "%s"', '$DB_USER', '${DB_CLIENT_USER}');
+  EXECUTE FORMAT('CREATE OR REPLACE FUNCTION user_search(uname TEXT) RETURNS TABLE (usename name, passwd text) LANGUAGE sql SECURITY DEFINER AS ''SELECT usename, passwd FROM pg_shadow WHERE usename=''''%s'''';''', '${DB_CLIENT_USER}');
+  EXECUTE FORMAT('REVOKE ALL ON FUNCTION user_search(text) FROM public');
+  EXECUTE FORMAT('GRANT EXECUTE ON FUNCTION user_search(text) TO cnpg_pooler_pgbouncer');
 END
 \$\$;
 EOF
