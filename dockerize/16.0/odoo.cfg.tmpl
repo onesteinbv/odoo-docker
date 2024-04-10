@@ -13,7 +13,6 @@ db_name = {{ .Env.DB_NAME }}
 dbfilter = ^{{ default .Env.DB_NAME "main" }}$
 {{- else }}
 dbfilter = ^{{ default .Env.DB_FILTER ".*" }}$
-db_name =
 {{- end }}
 list_db = {{ default .Env.LIST_DB "False" }}
 admin_passwd = {{ default .Env.ADMIN_PASSWD "" }}
