@@ -299,9 +299,6 @@ BEGIN
   EXECUTE FORMAT('GRANT CONNECT ON DATABASE "%s" TO cnpg_pooler_pgbouncer', '$DB_NAME');
   EXECUTE FORMAT('GRANT "%s" TO "%s"', '$DB_CLIENT_USER', '$DB_USER');
   EXECUTE FORMAT('REASSIGN OWNED BY "%s" TO "%s"', '$DB_USER', '$DB_CLIENT_USER');
-  CREATE OR REPLACE FUNCTION user_search(uname TEXT) RETURNS TABLE (usename name, passwd text) LANGUAGE sql SECURITY DEFINER AS 'SELECT usename, passwd FROM pg_shadow WHERE usename=\$1;';
-  REVOKE ALL ON FUNCTION user_search(text) FROM public;
-  GRANT EXECUTE ON FUNCTION user_search(text) TO cnpg_pooler_pgbouncer;
 END
 \$\$;
 EOF
@@ -326,9 +323,9 @@ case ${MODE:="InstallAndRun"} in
     CreateConfigFile
     CheckModules Strict
     InstallOdoo
+    GrantPrivileges
     UpdateOdoo
     PerformMaintenance
-    GrantPrivileges
     echo "Complete. Exiting."
     ;;
 
