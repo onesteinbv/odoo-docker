@@ -305,7 +305,20 @@ EOF
 }
 
 function Encode() {
-  echo "$1" | sed -E -e 's/ /%20/g' -e 's/%/%26/g' -e 's/\//%2F/g' -e 's/:/%3A/g' -e 's/=/%3D/g' -e 's/\?/%3F/g' -e 's/@/%40/g' -e 's/\[/%5B/g' -e 's/\]/%5D/g' -e 's/\\/%5C/'
+    local string="${1}"
+    local strlen=${#string}
+    local encoded=""
+    local pos c o
+
+    for (( pos=0 ; pos<strlen ; pos++ )); do
+        c=${string:$pos:1}
+        case "$c" in
+           [-_.~a-zA-Z0-9] ) o="${c}" ;;
+           * )               printf -v o '%%%02x' "'$c"
+        esac
+        encoded+="${o}"
+    done
+    echo "${encoded}"
 }
 
 if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
