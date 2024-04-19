@@ -10,11 +10,9 @@ db_password = {{ .Env.DB_PASSWORD }}
 db_sslmode = {{ default .Env.DB_SSLMODE "prefer" }}
 {{- if eq (default .Env.LIST_DB "False") "False" }}
 db_name = {{ .Env.DB_NAME }}
-dbfilter = ^{{ default .Env.DB_NAME "main" }}$
-{{- else }}
-dbfilter = ^{{ default .Env.DB_FILTER ".*" }}$
 {{- end }}
 list_db = {{ default .Env.LIST_DB "False" }}
+dbfilter = {{ default .Env.DB_FILTER ".*" }}
 admin_passwd = {{ default .Env.ADMIN_PASSWD "" }}
 db_maxconn = {{ default .Env.DB_MAXCONN "64" }}
 limit_memory_soft = {{ default .Env.LIMIT_MEMORY_SOFT "2147483648" }}
