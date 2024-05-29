@@ -322,7 +322,7 @@ EOF
   done
   for pgview in $(PsqlList "SELECT table_name FROM information_schema.views WHERE table_schema = 'public'");
   do
-    PsqlDo -c "ALTER VIEW \"$pgview\" OWNER TO \"$DB_CLIENT_USER\"";
+    PsqlDo "ALTER VIEW \"$pgview\" OWNER TO \"$DB_CLIENT_USER\"";
   done
 }
 
