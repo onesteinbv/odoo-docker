@@ -312,7 +312,7 @@ END
 \$\$;
 EOF
   echo "Transfer table, sequences and views ...";
-  for pgtable in $(PsqlList "SELECT tablename FROM pg_tables");
+  for pgtable in $(PsqlList "SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
   do
     PsqlDo "ALTER TABLE \"$pgtable\" OWNER TO \"$DB_CLIENT_USER\"";
   done
