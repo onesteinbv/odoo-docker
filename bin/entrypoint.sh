@@ -292,6 +292,7 @@ EOF
 }
 
 function GrantPrivileges() {
+  echo "Granting privileges...";
   cat << EOF | PGPASSWORD="$DB_PASSWORD" psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT"
 DO
 \$\$
