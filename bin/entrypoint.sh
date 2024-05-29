@@ -324,7 +324,6 @@ EOF
   do
     PsqlDo -c "ALTER VIEW \"$pgview\" OWNER TO \"$DB_CLIENT_USER\"";
   done
-
 }
 
 function Encode() {
