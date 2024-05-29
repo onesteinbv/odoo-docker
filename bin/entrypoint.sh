@@ -311,8 +311,7 @@ BEGIN
 END
 \$\$;
 EOF
-
-  echo "Tranfer table, sequences and views ...";
+  echo "Transfer table, sequences and views ...";
   for pgtable in $(PsqlList "SELECT tablename FROM pg_tables");
   do
     PsqlDo "ALTER TABLE \"$pgtable\" OWNER TO \"$DB_CLIENT_USER\"";
