@@ -12,6 +12,14 @@ function WithCorrectUser() {
   fi
 }
 
+function PsqlList() {
+  PGPASSWORD="$DB_PASSWORD" psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT" -tc "$1;"
+}
+
+function PsqlDo() {
+  PGPASSWORD="$DB_PASSWORD" psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT" -c "$1;"
+}
+
 function SetDockerFileStorePermissions() {
   # Make the Odoo user the owner of the filestore
   echo "Chown /odoo/data/odoo"
@@ -292,16 +300,30 @@ EOF
 }
 
 function GrantPrivileges() {
+  echo "Granting privileges...";
   cat << EOF | PGPASSWORD="$DB_PASSWORD" psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT"
 DO
 \$\$
 BEGIN
   EXECUTE FORMAT('GRANT CONNECT ON DATABASE "%s" TO cnpg_pooler_pgbouncer', '$DB_NAME');
   EXECUTE FORMAT('GRANT "%s" TO "%s"', '$DB_CLIENT_USER', '$DB_USER');
-  EXECUTE FORMAT('REASSIGN OWNED BY "%s" TO "%s"', '$DB_USER', '$DB_CLIENT_USER');
+  EXECUTE FORMAT('ALTER DATABASE "%s" OWNER TO "%s"', '$DB_NAME', '$DB_CLIENT_USER');
 END
 \$\$;
 EOF
+  echo "Transfer table, sequences and views ...";
+  for pgtable in $(PsqlList "SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
+  do
+    PsqlDo "ALTER TABLE \"$pgtable\" OWNER TO \"$DB_CLIENT_USER\"";
+  done
+  for pgsequence in $(PsqlList "SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public'");
+  do
+    PsqlDo "ALTER SEQUENCE \"$pgsequence\" OWNER TO \"$DB_CLIENT_USER\"";
+  done
+  for pgview in $(PsqlList "SELECT table_name FROM information_schema.views WHERE table_schema = 'public'");
+  do
+    PsqlDo "ALTER VIEW \"$pgview\" OWNER TO \"$DB_CLIENT_USER\"";
+  done
 }
 
 function Encode() {
