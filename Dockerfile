@@ -53,7 +53,7 @@ RUN pip install -e /odoo/src/odoo
 COPY ./package /odoo/custom
 COPY ./requirements.txt ./custom/requirements.tx[t] /odoo/custom/
 RUN pip install --no-cache-dir -r /odoo/custom/requirements.txt
-RUN pip install click-odoo-contrib
+RUN pip install click-odoo-contrib awscli
 COPY ./custom/scripts/ /odoo/scripts/
 COPY ./dockerize/${ODOO_VERSION} /templates
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh

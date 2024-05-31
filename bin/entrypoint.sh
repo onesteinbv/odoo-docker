@@ -133,6 +133,42 @@ function InstallOdoo() {
   echo "Initialization complete."
 }
 
+
+function S3Copy() {
+  echo "Copying 's3://${S3_BUCKET}/$1' to '$2'...";
+  AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY" AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY" AWS_ENDPOINT_URL="$S3_ENDPOINT_URL" aws s3 cp "s3://${S3_BUCKET}/$1" "$2"
+  echo "Copying complete"
+}
+
+function RestoreOdoo() {
+  # Initialize a new database if it doesn't exist yet.
+  # NOTE: Using click-odoo for ease. Either marabunta (camp2camp) and click-odoo
+  # (acsone) don't support uninstalling modules.
+  echo "Running pre-init script...";
+  if [ -f "/odoo/scripts/pre-init.sh" ]; then
+    echo "Running /odoo/scripts/pre-init.sh...";
+    WithCorrectUser /odoo/scripts/pre-init.sh
+    echo "Completed pre-init script."
+  else
+    echo "Pre-init script /odoo/scripts/pre-init.sh not found; skipping";
+  fi
+
+  echo "Restoring database '$DB_NAME'...";
+  PARAMS=""
+  if [[ ${RESTORE_MODE:-"Move"} == "Move" ]]; then
+    PARAMS+="--move"
+  else
+    PARAMS+="--copy"
+  fi
+  if [[ ${RESTORE_NEUTRALIZE:-"False"} == "True" ]]; then
+    PARAMS+=" --neutralize"
+  fi
+  click-odoo-restoredb -c $ODOO_RC $DB_NAME /odoo/restore.zip $PARAMS
+  EnsureInstallationTableExists
+  WriteState "Ready"
+  echo "Restoration complete."
+}
+
 function UpdateOdoo() {
   # Update the Odoo modules that have changed since the last update.
   echo "Running pre-update script...";
@@ -358,6 +394,21 @@ case ${MODE:="InstallAndRun"} in
     CreateConfigFile
     CheckModules Strict
     InstallOdoo
+    GrantPrivileges
+    UpdateOdoo
+    PerformMaintenance
+    echo "Complete. Exiting."
+    ;;
+
+  "Restore")
+    echo "Recovering Odoo..."
+    ExitIfListDb
+    EnsureDatabaseUser
+    ExitIfDbExists
+    CreateConfigFile
+    CheckModules Strict
+    S3Copy "restore.zip" "/odoo/restore.zip"
+    RestoreOdoo
     GrantPrivileges
     UpdateOdoo
     PerformMaintenance
