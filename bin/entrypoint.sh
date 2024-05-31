@@ -407,7 +407,7 @@ case ${MODE:="InstallAndRun"} in
     ExitIfDbExists
     CreateConfigFile
     CheckModules Strict
-    S3Copy "restore.zip" "/odoo/restore.zip"
+    S3Copy "restore.zip" "/odoo/restore.zip"  # TODO: Make this optional
     RestoreOdoo
     GrantPrivileges
     UpdateOdoo
