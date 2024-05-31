@@ -401,7 +401,7 @@ case ${MODE:="InstallAndRun"} in
     ;;
 
   "Restore")
-    echo "Recovering Odoo..."
+    echo "Restoring Odoo..."
     ExitIfListDb
     EnsureDatabaseUser
     ExitIfDbExists
