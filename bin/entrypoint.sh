@@ -409,9 +409,9 @@ case ${MODE:="InstallAndRun"} in
     CheckModules Strict
     S3Copy "restore.zip" "/odoo/restore.zip"  # TODO: Make this optional
     RestoreOdoo
-    GrantPrivileges
     UpdateOdoo
-    PerformMaintenance
+    PerformMaintenance  # This can install additional modules not installed in restore
+    GrantPrivileges
     echo "Complete. Exiting."
     ;;
 
