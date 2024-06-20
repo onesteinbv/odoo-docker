@@ -341,7 +341,6 @@ function GrantPrivileges() {
 DO
 \$\$
 BEGIN
-  EXECUTE FORMAT('GRANT CONNECT ON DATABASE "%s" TO cnpg_pooler_pgbouncer', '$DB_NAME');
   EXECUTE FORMAT('GRANT "%s" TO "%s"', '$DB_CLIENT_USER', '$DB_USER');
   EXECUTE FORMAT('ALTER DATABASE "%s" OWNER TO "%s"', '$DB_NAME', '$DB_CLIENT_USER');
 END
