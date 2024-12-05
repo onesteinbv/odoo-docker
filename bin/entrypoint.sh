@@ -127,7 +127,11 @@ function InstallOdoo() {
   fi
 
   echo "Initializing database '$DB_NAME'...";
-  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --no-demo --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL
+  PARAMS=""
+  if [[ ${NO_DEMO:-"True"} == "True" ]]; then
+    PARAMS+=" --no-demo"
+  fi
+  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --cache-max-age -1 --cache-max-size -1 --no-cache --log-level $LOG_LEVEL $PARAMS
   EnsureInstallationTableExists
   WriteState "Ready"
   echo "Initialization complete."
