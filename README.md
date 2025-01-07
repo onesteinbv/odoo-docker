@@ -1,7 +1,5 @@
 # odoo-docker
 
-Based on: https://github.com/onesteinbv/odoo-bedrock
-
 ## Usage modes
 
 ### `$MODE` parameters
