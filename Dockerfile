@@ -39,22 +39,12 @@ RUN chown -R odoo:odoo /odoo
 ENV OPENERP_SERVER=/odoo/odoo.cfg
 ENV ODOO_RC=/odoo/odoo.cfg
 
-COPY ./custom/odoo /odoo/src/odoo
 RUN set -x \
   && /tmp/install/arm64-odoo-requirements.sh \
   && rm -r /tmp/install
 
-RUN \
-  pip install --no-cache-dir \
-    -r /odoo/src/odoo/requirements.txt \
-    -f https://wheelhouse.acsone.eu/manylinux2014
-RUN pip install -e /odoo/src/odoo
-
-COPY ./package /odoo/custom
-COPY ./requirements.txt ./custom/requirements.tx[t] /odoo/custom/
-RUN pip install --no-cache-dir -r /odoo/custom/requirements.txt
 RUN pip install click-odoo-contrib awscli
-COPY ./custom/scripts/ /odoo/scripts/
+
 COPY ./dockerize/${ODOO_VERSION} /templates
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 

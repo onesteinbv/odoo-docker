@@ -1,5 +1,24 @@
 # odoo-docker
 
+This is a base image that does not include Odoo itself. You need to provide both Odoo and your custom modules yourself. Example:
+
+```
+FROM ghcr.io/onesteinbv/odoo-docker:latest
+COPY ./odoo /odoo/src/odoo
+COPY ./custom /odoo/custom
+COPY ./scripts /odoo/scripts
+RUN pip install --no-cache-dir -r /odoo/src/odoo/requirements.txt -r /odoo/custom/requirements.txt -f https://wheelhouse.acsone.eu/manylinux2014
+RUN pip install -e /odoo/src/odoo
+```
+
+## Scripts
+
+The entrypoint checks for the presence of a script, but all of these are optional.
+
+- `/odoo/scripts/pre-init.sh`: Runs before initialization of the Odoo database
+- `/odoo/scripts/pre-update.sh`: Runs before updating the Odoo database
+- `/odoo/scripts/run.sh`: Runs after updating the Odoo database
+
 ## Usage modes
 
 ### `$MODE` parameters
