@@ -52,22 +52,30 @@ proxy_mode = True
 unaccent = {{ default .Env.UNACCENT "False" }}
 {{ default .Env.ADDITIONAL_ODOO_RC "" }}
 
-{{ if isTrue (default .Env.S3_ENABLED "false") }}
-[fs_storage.s3]
-protocol=s3
+{{ if isTrue (default .Env.EXT_STORAGE_ENABLED "False") }}
+[fs_storage.{{ .Env.EXT_STORAGE_NAME }}]
+protocol={{ .Env.EXT_STORAGE_PROTOCOL }}
+{{ if eq .Env.EXT_STORAGE_PROTOCOL "s3" }}
 options={"endpoint_url": "{{ .Env.S3_ENDPOINT_URL }}", "key": "{{ .Env.S3_ACCESS_KEY }}", "secret": "{{ .Env.S3_SECRET_KEY }}"}
-directory_path={{ .Env.S3_BUCKET }}
-use_as_default_for_attachments=True
-use_filename_obfuscation=True
-force_db_for_default_attachment_rules={"image/": 51200, "application/javascript": 0, "text/css": 0}
-base_url=/
-autovacuum_gc=True
-{{ if isTrue (default .Env.S3_BACKUP "false") }}
-use_for_backup=True
-backup_include_filestore={{ default .Env.S3_BACKUP_INCLUDE_FILESTORE "False" }}
-backup_keep_time={{ default .Env.S3_BACKUP_KEEP_TIME "7" }}
-backup_dir={{ default .Env.S3_BACKUP_DIR "backups" }}
-backup_filename_format={{ default .Env.S3_BACKUP_FILENAME_FORMAT "backup-%%(db)s-%%(dt)s.%%(ext)s" }}
+{{ else if eq .Env.EXT_STORAGE_PROTOCOL "sftp" }}
+options={"hostname": "{{ .Env.SFTP_HOST }}", "port": "{{ .Env.SFTP_PORT }}", "username": "{{ .Env.SFTP_USER }}", "password": "{{ .Env.SFTP_PASSWORD }}", "allow_agent": "{{ .Env.SFTP_AGENT }}"}
 {{ end }}
-
+directory_path="{{ .Env.FS_STORAGE_PATH }}"
+{{ if isTrue (default .Env.EXT_STORAGE_ATTACHMENTS "False") }}
+use_as_default_for_attachments=True
+base_url={{ default .Env.EXT_STORAGE_ATTACHMENTS_BASE_URL "/" }}
+autovacuum_gc={{ default .Env.EXT_STORAGE_AUTO_VACUUM "True" }}
+use_x_sendfile_to_serve_internal_url={{ default .Env.EXT_STORAGE_SEND_FILE "False" }}
+is_directory_path_in_url={{ default .Env.EXT_STORAGE_DIR_PATH_IN_URL "True" }}
+optimizes_directory_path={{ default .Env.EXT_STORAGE_OPTIMIZE_DIR_PATH "False" }}
+use_filename_obfuscation={{ default .Env.EXT_STORAGE_FILENAME_OBFUSCATION "True" }}
+force_db_for_default_attachment_rules={{ default .Env.EXT_STORAGE_ATTACHMENTS_FORCE_DBRULES "{\"image/\": 51200, \"application/javascript\": 0, \"text/css\": 0}" }}
+{{ end }}
+{{ if isTrue (default .Env.EXT_STORAGE_BACKUPS "False") }}
+use_for_backup=True
+backup_include_filestore={{ default .Env.EXT_STORAGE_BACKUPS_INCLUDE_FILESTORE "False" }}
+backup_dir={{ default .Env.EXT_STORAGE_BACKUPS_DIR "backups" }}
+backup_keep_time={{ default .Env.EXT_STORAGE_BACKUPS_KEEP_TIME "7" }}
+backup_filename_format={{ default .Env.EXT_STORAGE_BACKUPS_FILENAME_FORMAT "backup-%%(db)s-%%(dt)s.%%(ext)s" }}
+{{ end }}
 {{ end }}
