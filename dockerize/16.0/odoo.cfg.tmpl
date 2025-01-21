@@ -53,11 +53,11 @@ unaccent = {{ default .Env.UNACCENT "False" }}
 {{ default .Env.ADDITIONAL_ODOO_RC "" }}
 
 {{ if isTrue (default .Env.S3_ENABLED "false") }}
-[fs_storage.s3]
-protocol=s3
-options={"endpoint_url": "{{ .Env.S3_ENDPOINT_URL }}", "key": "{{ .Env.S3_ACCESS_KEY }}", "secret": "{{ .Env.S3_SECRET_KEY }}"}
+[fs_storage.sftp]
+protocol=sftp
+options={"host":"localhost","ssh_kwargs":{"username":"test","password":"test","allow_agent":false,"port":2022}}
 directory_path={{ .Env.S3_BUCKET }}
-use_as_default_for_attachments=False
+use_as_default_for_attachments=True
 use_filename_obfuscation=True
 force_db_for_default_attachment_rules={"image/": 51200, "application/javascript": 0, "text/css": 0}
 base_url=/
@@ -69,14 +69,4 @@ backup_keep_time={{ default .Env.S3_BACKUP_KEEP_TIME "7" }}
 backup_dir={{ default .Env.S3_BACKUP_DIR "backups" }}
 backup_filename_format={{ default .Env.S3_BACKUP_FILENAME_FORMAT "backup-%%(db)s-%%(dt)s.%%(ext)s" }}
 {{ end }}
-
-[fs_storage.sftp]
-protocol=sftp
-options={"hostname": "localhost", "port": "2022", "username": "test", "password": "test", "allow_agent": "false"}
-directory_path=cnpg-testbackups1
-use_as_default_for_attachments=True
-use_filename_obfuscation=True
-force_db_for_default_attachment_rules={"image/": 51200, "application/javascript": 0, "text/css": 0}
-base_url=/
-autovacuum_gc=True
 {{ end }}
