@@ -7,7 +7,7 @@ FROM ghcr.io/onesteinbv/odoo-docker:latest
 COPY ./odoo /odoo/src/odoo
 COPY ./custom /odoo/custom
 COPY ./scripts /odoo/scripts
-RUN pip install --no-cache-dir -r /odoo/src/odoo/requirements.txt -r /odoo/custom/requirements.txt -f https://wheelhouse.acsone.eu/manylinux2014
+RUN pip install --no-cache-dir -r /odoo/src/odoo/requirements.txt -r /odoo/custom/requirements.txt
 RUN pip install -e /odoo/src/odoo
 ```
 
