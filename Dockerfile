@@ -1,7 +1,7 @@
-FROM docker.io/ubuntu:24.04
+FROM docker.io/ubuntu:22.04
 MAINTAINER Onestein
 
-ARG PYTHONBIN=python3.12
+ARG PYTHONBIN=python3.10
 ARG USER_ID=999
 
 ENV \
