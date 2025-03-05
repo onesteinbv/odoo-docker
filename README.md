@@ -3,12 +3,20 @@
 This is a base image that does not include Odoo itself. You need to provide both Odoo and your custom modules yourself. Example:
 
 ```
+FROM ubuntu:22.04 AS wheels
+COPY ./odoo/requirements.txt /requirements.txt
+COPY ./custom/requirements.txt /custom-requirements.txt
+RUN apt-get update && apt-get -y install python3-pip cython3 python3 libldap2-dev libpq-dev libsasl2-dev python3-requests
+RUN pip wheel -r /requirements.txt -r /custom-requirements.txt --wheel-dir=/wheels
+
 FROM ghcr.io/onesteinbv/odoo-docker:latest
 COPY ./odoo /odoo/src/odoo
 COPY ./custom /odoo/custom
 COPY ./scripts /odoo/scripts
-RUN pip install --no-cache-dir -r /odoo/src/odoo/requirements.txt -r /odoo/custom/requirements.txt
+COPY --from=wheels ./wheels /odoo/wheels
+RUN pip install --no-cache-dir -r /odoo/src/odoo/requirements.txt -r /odoo/custom/requirements.txt --find-links /odoo/wheels
 RUN pip install -e /odoo/src/odoo
+RUN rm -rf /odoo/wheels
 ```
 
 ## Scripts
