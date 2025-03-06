@@ -185,9 +185,11 @@ function UpdateOdoo() {
     echo "/odoo/scripts/pre-update.sh not found; skipping";
   fi
 
+  echo "Modules to update..."
+  click-odoo-update -c $ODOO_RC -d $DB_NAME --list-only
   echo "Updating database '$DB_NAME'...";
   click-odoo-update -c $ODOO_RC -d $DB_NAME
-
+ 
   WriteState "Ready"
   echo "Update complete."
 }
