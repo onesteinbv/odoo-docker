@@ -189,7 +189,7 @@ function UpdateOdoo() {
   click-odoo-update -c $ODOO_RC -d $DB_NAME --list-only
   echo "Updating database '$DB_NAME'...";
   click-odoo-update -c $ODOO_RC -d $DB_NAME
- 
+
   WriteState "Ready"
   echo "Update complete."
 }
