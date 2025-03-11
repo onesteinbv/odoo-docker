@@ -7,14 +7,6 @@ CONFIG_TARGET=/odoo/odoo.cfg
 # Include common functions
 . common.sh
 
-function WithCorrectUser() {
-  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
-    gosu odoo "$@"
-  else
-    "$@"
-  fi
-}
-
 function PsqlList() {
   PGPASSWORD="$DB_PASSWORD" psql -U "$DB_USER" -d "$DB_NAME" -h "$DB_HOST" -p "$DB_PORT" -tc "$1;"
 }
@@ -31,29 +23,6 @@ function SetDockerFileStorePermissions() {
     mkdir "/odoo/data/odoo"
   fi
   chown -R odoo:odoo /odoo/data/odoo
-}
-
-
-function CreateConfigFile() {
-    # Check if a config template file exists.
-  if [ -z $TEMPLATES_DIR ]; then
-    echo "Template folder not defined. Failing."
-    exit 1
-  fi
-  if [ ! -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
-    echo "Template file does not exist. Failing."
-    exit 1
-  fi
-
-  # Create a config file.
-  echo "Creating Odoo configuration file...";
-  WithCorrectUser dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
-
-  # Check that a config file was created.
-  if [ ! -e $CONFIG_TARGET ]; then
-    echo "Dockerize failed. Failing."
-    exit 1
-  fi
 }
 
 function CheckDbVariable() {
