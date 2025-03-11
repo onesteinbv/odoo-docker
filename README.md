@@ -64,6 +64,11 @@ are:
    quits when done.
    **USE WITH CAUTION**. When the state table indicates Odoo is not ready, it's possible
    that another pod is installing/updating Odoo.
+ - `ForceUpdateAndRun`: Updates and runs Odoo, even while the state table indicates that Odoo is
+   not ready. Can be used to retry a crashed update, or to update an Odoo that does
+   not have a state table yet.
+   **USE WITH CAUTION**. When the state table indicates Odoo is not ready, it's possible
+   that another pod is installing/updating Odoo.   
  - `Init`: Similar to Install, with a few differences:
    - exits *without error* if the database already exists or if called using 
      `LIST_DB="True"`. 

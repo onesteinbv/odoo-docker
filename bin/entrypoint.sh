@@ -4,6 +4,9 @@ set -Eeuo pipefail
 TEMPLATES_DIR=/templates
 CONFIG_TARGET=/odoo/odoo.cfg
 
+# Include common functions
+. common.sh
+
 function WithCorrectUser() {
   if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
     gosu odoo "$@"
@@ -205,13 +208,6 @@ function PerformMaintenance() {
   else
     echo "Maintenance script not found; skipping maintenance.";
   fi
-}
-
-function WaitForPostgres() {
-  until pg_isready -h $DB_HOST -p $DB_PORT -t 5 >/dev/null
-  do
-    echo "Waiting for Postgres server $DB_HOST:$DB_PORT..."
-  done
 }
 
 function EnsureInstallationTableExists() {
@@ -511,6 +507,21 @@ case ${MODE:="InstallAndRun"} in
     CheckDb Strict
     ForceReadyState
     echo "Complete. Exiting."
+    ;;
+
+
+  "ForceUpdateAndRun")
+    ExitIfListDb Strict
+    echo "Waiting 30 seconds before forcing update and run..."
+    sleep 30
+    echo "Updating and running Odoo (forced)..."
+    CreateConfigFile
+    CheckModules
+    CheckDb Strict
+    ForceReadyState
+    UpdateOdoo
+    PerformMaintenance
+    WithCorrectUser "$@"
     ;;
 
   *)

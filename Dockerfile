@@ -1,5 +1,4 @@
 FROM docker.io/ubuntu:22.04
-MAINTAINER Onestein
 
 ARG PYTHONBIN=python3.10
 ARG USER_ID=999
@@ -46,7 +45,8 @@ RUN set -x \
 RUN pip install click-odoo-contrib awscli
 
 COPY ./dockerize/${ODOO_VERSION} /templates
-COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./bin/ /usr/local/bin/
+RUN chmod +x /usr/local/bin/*
 
 ENV ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/custom
 
