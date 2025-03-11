@@ -1,8 +1,5 @@
 #!/bin/bash
 
-TEMPLATES_DIR=/templates
-CONFIG_TARGET=/odoo/odoo.cfg
-
 function WithCorrectUser() {
   if [[ -n "${DOCKER:-}" && "$DOCKER" == "true" ]]; then
     gosu odoo "$@"
@@ -19,22 +16,12 @@ function WaitForPostgres() {
 }
 
 function CreateConfigFile() {
-    # Check if a config template file exists.
-  if [ -z $TEMPLATES_DIR ]; then
-    echo "Template folder not defined. Failing."
-    exit 1
-  fi
-  if [ ! -e $TEMPLATES_DIR/odoo.cfg.tmpl ]; then
-    echo "Template file does not exist. Failing."
-    exit 1
-  fi
-
   # Create a config file.
   echo "Creating Odoo configuration file...";
-  WithCorrectUser dockerize -template $TEMPLATES_DIR/odoo.cfg.tmpl:$CONFIG_TARGET
+  WithCorrectUser dockerize -template /templates/odoo.cfg.tmpl:/odoo/odoo.cfg
 
   # Check that a config file was created.
-  if [ ! -e $CONFIG_TARGET ]; then
+  if [ ! -e /odoo/odoo.cfg ]; then
     echo "Dockerize failed. Failing."
     exit 1
   fi
