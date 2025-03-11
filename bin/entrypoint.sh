@@ -1,9 +1,6 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-TEMPLATES_DIR=/templates
-CONFIG_TARGET=/odoo/odoo.cfg
-
 # Include common functions
 . common.sh
 

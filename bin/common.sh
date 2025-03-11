@@ -1,7 +1,10 @@
 #!/bin/bash
 
+TEMPLATES_DIR=/templates
+CONFIG_TARGET=/odoo/odoo.cfg
+
 function WithCorrectUser() {
-  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+  if [[ -n "${DOCKER:-}" && "$DOCKER" == "true" ]]; then
     gosu odoo "$@"
   else
     "$@"
