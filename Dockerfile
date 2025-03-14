@@ -37,6 +37,7 @@ RUN chown -R odoo:odoo /odoo
 
 ENV OPENERP_SERVER=/odoo/odoo.cfg
 ENV ODOO_RC=/odoo/odoo.cfg
+ENV DOCKER=false
 
 RUN set -x \
   && /tmp/install/arm64-odoo-requirements.sh \
