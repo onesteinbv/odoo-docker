@@ -56,7 +56,7 @@ unaccent = {{ default .Env.UNACCENT "False" }}
 [fs_storage.sftp]
 protocol=sftp
 options={"host":"localhost","username":"test","password":"test","allow_agent":false,"port":2022}
-directory_path={{ .Env.S3_BUCKET }}
+directory_path="/{{ .Env.S3_BUCKET }}"
 use_as_default_for_attachments=True
 use_filename_obfuscation=True
 force_db_for_default_attachment_rules={"image/": 51200, "application/javascript": 0, "text/css": 0}
