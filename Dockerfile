@@ -15,14 +15,14 @@ COPY ./install /tmp/install
 RUN set -x \
   && /tmp/install/pre-install.sh \
   && /tmp/install/tools.sh \
-  && /tmp/install/confd.sh \
   && /tmp/install/gosu.sh \
   && /tmp/install/python3.sh \
   && /tmp/install/wkhtmltopdf.sh \
   && /tmp/install/pgdg.sh \
   && /tmp/install/dockerize.sh \
   && /tmp/install/arm64.sh \
-  && /tmp/install/post-install-clean.sh
+  && /tmp/install/post-install-clean.sh \
+  && rm -r /tmp/install
 
 # isolate from system python libraries
 RUN set -x \
@@ -38,10 +38,6 @@ RUN chown -R odoo:odoo /odoo
 ENV OPENERP_SERVER=/odoo/odoo.cfg
 ENV ODOO_RC=/odoo/odoo.cfg
 ENV DOCKER="false"
-
-RUN set -x \
-  && /tmp/install/arm64-odoo-requirements.sh \
-  && rm -r /tmp/install
 
 RUN pip install click-odoo-contrib awscli
 
