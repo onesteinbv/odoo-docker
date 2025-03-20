@@ -34,13 +34,18 @@ RUN set -x \
   && $PYTHONBIN -m venv /odoo \
   && /odoo/bin/pip install -U pip wheel setuptools click-odoo-contrib awscli
 
+# Create odoo user
 RUN adduser --home /odoo --disabled-password --shell /bin/bash -u 999 --gecos "" odoo
+
+# Create odoo directory
 RUN mkdir -p /odoo \
     && touch /odoo/odoo.cfg \
     && chown -R odoo:odoo /odoo
 
+# Copy dockerize templates
 COPY ./dockerize/${ODOO_VERSION} /templates
 
+# Copy bin and change permissions
 COPY ./bin/ /usr/local/bin/
 RUN chmod +x /usr/local/bin/*
 
