@@ -3,7 +3,7 @@ name: ci
 on:
   push:
     branches:
-      - "16.0"
+      - "main"
 
 jobs:
   docker:
