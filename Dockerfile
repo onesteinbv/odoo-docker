@@ -9,7 +9,12 @@ ENV \
   LANG=C.UTF-8 \
   LC_ALL=C.UTF-8 \
   DEBIAN_FRONTEND=noninteractive \
-  KWKHTMLTOPDF_SERVER_URL=http://kwkhtmltopdf
+  KWKHTMLTOPDF_SERVER_URL=http://kwkhtmltopdf \
+  OPENERP_SERVER=/odoo/odoo.cfg \
+  ODOO_RC=/odoo/odoo.cfg \
+  DOCKER=false \
+  ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/custom \
+  PATH=/odoo/bin:$PATH
 
 COPY ./install /tmp/install
 RUN set -x \
@@ -24,28 +29,21 @@ RUN set -x \
   && /tmp/install/post-install-clean.sh \
   && rm -r /tmp/install
 
-# isolate from system python libraries
+# Create virtualenv
 RUN set -x \
   && $PYTHONBIN -m venv /odoo \
   && /odoo/bin/pip install -U pip wheel setuptools
-ENV PATH=/odoo/bin:$PATH
 
 RUN adduser --home /odoo --disabled-password --shell /bin/bash -u 999 --gecos "" odoo
-RUN mkdir -p /odoo
-RUN touch /odoo/odoo.cfg
-RUN chown -R odoo:odoo /odoo
-
-ENV OPENERP_SERVER=/odoo/odoo.cfg
-ENV ODOO_RC=/odoo/odoo.cfg
-ENV DOCKER="false"
+RUN mkdir -p /odoo \
+    && touch /odoo/odoo.cfg \
+    && chown -R odoo:odoo /odoo
 
 RUN pip install click-odoo-contrib awscli
 
 COPY ./dockerize/${ODOO_VERSION} /templates
 COPY ./bin/ /usr/local/bin/
 RUN chmod +x /usr/local/bin/*
-
-ENV ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/custom
 
 EXPOSE 8069 8072
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
