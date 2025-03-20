@@ -32,16 +32,15 @@ RUN set -x \
 # Create virtualenv
 RUN set -x \
   && $PYTHONBIN -m venv /odoo \
-  && /odoo/bin/pip install -U pip wheel setuptools
+  && /odoo/bin/pip install -U pip wheel setuptools click-odoo-contrib awscli
 
 RUN adduser --home /odoo --disabled-password --shell /bin/bash -u 999 --gecos "" odoo
 RUN mkdir -p /odoo \
     && touch /odoo/odoo.cfg \
     && chown -R odoo:odoo /odoo
 
-RUN pip install click-odoo-contrib awscli
-
 COPY ./dockerize/${ODOO_VERSION} /templates
+
 COPY ./bin/ /usr/local/bin/
 RUN chmod +x /usr/local/bin/*
 
