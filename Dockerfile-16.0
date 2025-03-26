@@ -32,7 +32,7 @@ RUN set -x \
 # Create virtualenv
 RUN set -x \
   && $PYTHONBIN -m venv /odoo \
-  && /odoo/bin/pip install -U pip click-odoo-contrib awscli
+  && /odoo/bin/pip install -U click-odoo-contrib awscli
 
 # Create odoo user
 RUN adduser --home /odoo --disabled-password --shell /bin/bash -u 999 --gecos "" odoo
