@@ -64,12 +64,12 @@ directory_path="{{ .Env.FS_STORAGE_PATH }}"
 {{ if isTrue (default .Env.EXT_STORAGE_ATTACHMENTS "False") }}
 use_as_default_for_attachments=True
 base_url={{ default .Env.EXT_STORAGE_ATTACHMENTS_BASE_URL "/" }}
-autovacuum_gc={{ default .Env.EXT_STORAGE_AUTO_VACUUM "False" }}
+autovacuum_gc={{ default .Env.EXT_STORAGE_AUTO_VACUUM "True" }}
 use_x_sendfile_to_serve_internal_url={{ default .Env.EXT_STORAGE_SEND_FILE "False" }}
 is_directory_path_in_url={{ default .Env.EXT_STORAGE_DIR_PATH_IN_URL "True" }}
 optimizes_directory_path={{ default .Env.EXT_STORAGE_OPTIMIZE_DIR_PATH "True" }}
 use_filename_obfuscation={{ default .Env.EXT_STORAGE_FILENAME_OBFUSCATION "True" }}
-force_db_for_default_attachment_rules={{ default .Env.EXT_STORAGE_ATTACHMENTS_FORCE_DBRULES "/" }}
+force_db_for_default_attachment_rules={{ default .Env.EXT_STORAGE_ATTACHMENTS_FORCE_DBRULES "{\"image/\": 51200, \"application/javascript\": 0, \"text/css\": 0}" }}
 {{ end }}
 {{ if isTrue (default .Env.EXT_STORAGE_BACKUPS "False") }}
 use_for_backup=True
