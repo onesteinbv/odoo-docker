@@ -6,9 +6,10 @@ This is a base image that does not include Odoo itself. You need to provide both
 FROM ubuntu:22.04 AS wheels
 COPY ./odoo/requirements.txt /requirements.txt
 COPY ./custom/requirements.txt /custom-requirements.txt
-RUN apt-get update && apt-get -y install python3-pip cython3 python3 libldap2-dev libpq-dev libsasl2-dev python3-requests gcc python3-dev
-RUN pip install -U pip wheel setuptools
-RUN pip wheel -r /requirements.txt -r /custom-requirements.txt --wheel-dir=/wheels
+RUN apt-get update \
+    && apt-get install -y python3-pip cython3 python3 libldap2-dev libpq-dev libsasl2-dev python3-requests gcc python3-dev \
+    && pip install -U pip wheel setuptools \
+    && pip wheel -r /requirements.txt -r /curq-requirements.txt --wheel-dir=/wheels
 
 FROM ghcr.io/onesteinbv/odoo-docker:latest
 COPY ./odoo /odoo/src/odoo
