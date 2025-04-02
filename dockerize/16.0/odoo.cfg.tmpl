@@ -54,6 +54,7 @@ backup_keep_time={{ default .Env.S3_BACKUP_KEEP_TIME "7" }}
 backup_dir={{ default .Env.S3_BACKUP_DIR "backups" }}
 backup_filename_format={{ default .Env.S3_BACKUP_FILENAME_FORMAT "backup-%%(db)s-%%(dt)s.%%(ext)s" }}
 {{ end }}
+{{ end }}
 
 {{ if isTrue (default .Env.EXT_STORAGE_ENABLED "False") }}
 [fs_storage.{{ .Env.EXT_STORAGE_NAME }}]
