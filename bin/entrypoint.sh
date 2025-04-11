@@ -15,9 +15,9 @@ function PsqlDo() {
 function SetDockerFileStorePermissions() {
   # Make the Odoo user the owner of the filestore
   echo "Chown /odoo/data/odoo"
-  chown -R odoo:odoo /odoo/data  # Test
+  chown -R odoo:odoo /odoo/data
   if [ ! -d "/odoo/data/odoo" ]; then
-    mkdir "/odoo/data/odoo"
+    mkdir -p /odoo/data/odoo/{addons,filestore,sessions}
   fi
   chown -R odoo:odoo /odoo/data/odoo
 }
@@ -100,7 +100,7 @@ function InstallOdoo() {
   if [[ ${NO_DEMO:-"True"} == "True" ]]; then
     PARAMS+=" --no-demo"
   fi
-  click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --cache-max-age -1 --cache-max-size -1 --no-cache $PARAMS
+  WithCorrectUser click-odoo-initdb -c $ODOO_RC -m "$MODULES" -n $DB_NAME --unless-exists --cache-max-age -1 --cache-max-size -1 --no-cache $PARAMS
   EnsureInstallationTableExists
   WriteState "Ready"
   echo "Initialization complete."
@@ -136,7 +136,7 @@ function RestoreOdoo() {
   if [[ ${RESTORE_NEUTRALIZE:-"False"} == "True" ]]; then
     PARAMS+=" --neutralize"
   fi
-  click-odoo-restoredb -c $ODOO_RC $DB_NAME /odoo/restore.zip $PARAMS
+  WithCorrectUser click-odoo-restoredb -c $ODOO_RC $DB_NAME /odoo/restore.zip $PARAMS
   EnsureInstallationTableExists
   WriteState "Ready"
   echo "Restoration complete."
@@ -155,9 +155,9 @@ function UpdateOdoo() {
   fi
 
   echo "Modules to update..."
-  click-odoo-update -c $ODOO_RC -d $DB_NAME --list-only
+  WithCorrectUser click-odoo-update -c $ODOO_RC -d $DB_NAME --list-only
   echo "Updating database '$DB_NAME'...";
-  click-odoo-update -c $ODOO_RC -d $DB_NAME
+  WithCorrectUser click-odoo-update -c $ODOO_RC -d $DB_NAME
 
   WriteState "Ready"
   echo "Update complete."
