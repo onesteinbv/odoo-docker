@@ -418,6 +418,7 @@ case ${MODE:="InstallAndRun"} in
 
   # Should not be used in K8s
   "InstallAndRun")
+    WaitForPostgres
     echo "Installing and running Odoo..."
     ExitIfListDb Strict
     CreateConfigFile

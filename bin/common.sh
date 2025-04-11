@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function WithCorrectUser() {
-  if [[ -n "${DOCKER:-}" && "$DOCKER" == "true" ]]; then
+  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
     gosu odoo "$@"
   else
     "$@"
