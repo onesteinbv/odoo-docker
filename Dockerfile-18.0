@@ -1,6 +1,6 @@
 FROM docker.io/ubuntu:22.04
 
-ARG PYTHONBIN=python3.10
+ARG PYTHONBIN=python3.11
 ARG USER_ID=999
 
 ENV \
