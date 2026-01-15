@@ -27,6 +27,7 @@ RUN set -x \
   && /tmp/install/pgdg.sh \
   && /tmp/install/dockerize.sh \
   && /tmp/install/arm64.sh \
+  && /tmp/install/s5cmd.sh \
   && /tmp/install/post-install-clean.sh \
   && rm -r /tmp/install
 

@@ -109,7 +109,7 @@ function InstallOdoo() {
 
 function S3Copy() {
   echo "Copying 's3://${S3_BUCKET}/$1' to '$2'...";
-  AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY" AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY" AWS_ENDPOINT_URL="$S3_ENDPOINT_URL" aws s3 cp "s3://${S3_BUCKET}/$1" "$2"
+  AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY" AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY" S3_ENDPOINT_URL="$S3_ENDPOINT_URL" s5cmd cp "s3://${S3_BUCKET}/$1" "$2" 
   echo "Copying complete"
 }
 
