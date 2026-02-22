@@ -1,10 +1,11 @@
-name: ci
+name: slim-ci
 
 on:
   push:
     branches:
       - "main"
-
+    paths:
+      - "slim/**"
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -24,5 +25,5 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ matrix.version }},ghcr.io/${{ github.repository }}:${{ matrix.version }}-${{ github.sha }}
+          tags: ghcr.io/${{ github.repository }}:${{ matrix.version }}-slim,ghcr.io/${{ github.repository }}:${{ matrix.version }}-slim-${{ github.sha }}
           file: ./Dockerfile-${{ matrix.version }}
