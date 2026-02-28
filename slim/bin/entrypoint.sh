@@ -38,11 +38,11 @@ function DatabaseEmpty() {
 
 function InstallOdoo() {
   if [[ -z $DB_NAME || $DB_NAME == "False" ]]; then
-    echo "Database name not provided. Skipping installation."
+    echo "Database name not provided. Exiting."
     exit 1
   fi
   if DatabaseExists && ! DatabaseEmpty; then
-    echo "Database '$DB_NAME' already exists and is not empty. Skipping installation."
+    echo "Database '$DB_NAME' already exists and is not empty; skipping installation."
     return
   fi
 
@@ -53,11 +53,15 @@ function InstallOdoo() {
 
 function UpdateOdoo() {
   if [[ -z $DB_NAME || $DB_NAME == "False" ]]; then
-    echo "Database name not provided. Skipping installation."
+    echo "Database name not provided; exiting."
     exit 1
   fi
   if ! DatabaseExists; then
-    echo "Database '$DB_NAME' does not exist. Skipping update."
+    echo "Database '$DB_NAME' does not exist; exiting."
+    exit 1
+  fi
+  if DatabaseEmpty; then
+    echo "Database '$DB_NAME' is empty; exiting."
     exit 1
   fi
   
@@ -88,7 +92,7 @@ case ${MODE:="InstallAndRun"} in
     CreateConfigFile
     InstallOdoo
     PerformMaintenance
-    echo "Complete. Exiting."
+    echo "Complete; exiting."
     ;;
 
   "Update")
@@ -96,7 +100,7 @@ case ${MODE:="InstallAndRun"} in
     CreateConfigFile
     UpdateOdoo
     PerformMaintenance
-    echo "Complete. Exiting."
+    echo "Complete; exiting."
     ;;
 
   "Run")
