@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Map environment variables to Postgres client environment variables for convenience.
+export PGHOST="$DB_HOST"
+export PGPORT="$DB_PORT"
+export PGUSER="$DB_USER"
+export PGPASSWORD="$DB_PASSWORD"
+export PGDATABASE="$DB_NAME"
+
 function WithCorrectUser() {
   if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
     gosu odoo "$@"
@@ -9,9 +16,9 @@ function WithCorrectUser() {
 }
 
 function WaitForPostgres() {
-  until pg_isready -h $DB_HOST -p $DB_PORT -t 5 >/dev/null
+  until pg_isready -t 5 >/dev/null
   do
-    echo "Waiting for Postgres server $DB_HOST:$DB_PORT..."
+    echo "Waiting for Postgres server $PGHOST:$PGPORT..."
     sleep 1
   done
 }

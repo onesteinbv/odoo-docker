@@ -1,14 +1,9 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-# Include common functions
+# Include common functions and environment variable mappings
 . common.sh
 
-export PGHOST="$DB_HOST"
-export PGPORT="$DB_PORT"
-export PGUSER="$DB_USER"
-export PGPASSWORD="$DB_PASSWORD"
-export PGDATABASE="$DB_NAME"
 export SESSION_DB_URI="postgresql://$(Encode "$DB_USER"):$(Encode "$DB_PASSWORD")@$(Encode "$DB_HOST"):$(Encode "$DB_PORT")/$(Encode "$DB_NAME")"
 
 function SetDockerFileStorePermissions() {
@@ -45,9 +40,12 @@ function InstallOdoo() {
     echo "Database '$DB_NAME' already exists and is not empty; skipping installation."
     return
   fi
-
+  local flags=()
+  if [[ ${NO_DEMO:-"True"} == "True" ]]; then
+    flags+=(--without-demo all)
+  fi
   echo "Initializing database '$DB_NAME'...";
-  WithCorrectUser "$ODOO_BIN" -c "$ODOO_RC" -d "$DB_NAME" -i "$MODULES" --stop-after-init --no-http $([[ ${NO_DEMO:-"True"} == "True" ]] && echo "--without-demo all")
+  WithCorrectUser "$ODOO_BIN" -c "$ODOO_RC" -d "$DB_NAME" -i "$MODULES" --stop-after-init --no-http "${flags[@]}"
   echo "Initialization complete."
 }
 
@@ -66,7 +64,7 @@ function UpdateOdoo() {
   fi
   
   echo "Updating database '$DB_NAME'...";
-  WithCorrectUser click-odoo-update -c $ODOO_RC -d $DB_NAME
+  WithCorrectUser click-odoo-update -c "$ODOO_RC" -d "$DB_NAME"
   echo "Update complete."
 }
 
@@ -96,6 +94,7 @@ case ${MODE:="InstallAndRun"} in
     ;;
 
   "Update")
+    WaitForPostgres
     echo "Updating Odoo..."
     CreateConfigFile
     UpdateOdoo
@@ -104,6 +103,7 @@ case ${MODE:="InstallAndRun"} in
     ;;
 
   "Run")
+    WaitForPostgres
     echo "Running Odoo..."
     CreateConfigFile
     WithCorrectUser "$@"
