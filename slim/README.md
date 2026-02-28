@@ -40,6 +40,7 @@ The entrypoint checks for the presence of a script, but are optional.
    script (`run.sh`), then runs Odoo. This is the **default** mode.
 
 ### Database environment
+
 The entrypoint exports `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`
 to the matching `PG*` variables so tools like `psql` can be used directly.
 

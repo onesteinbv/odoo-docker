@@ -1,5 +1,8 @@
 # odoo-docker
 
+> [!CAUTION]  
+> This is a legacy image.
+
 This is a base image that does not include Odoo itself. You need to provide both Odoo and your custom modules yourself. Example:
 
 ```
