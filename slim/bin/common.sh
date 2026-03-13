@@ -5,7 +5,9 @@ export PGHOST="$DB_HOST"
 export PGPORT="$DB_PORT"
 export PGUSER="$DB_USER"
 export PGPASSWORD="$DB_PASSWORD"
-export PGDATABASE="$DB_NAME"
+if [[ -n "$DB_NAME" && "$DB_NAME" != "False" ]]; then
+  export PGDATABASE="$DB_NAME"
+fi
 
 function WithCorrectUser() {
   if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
