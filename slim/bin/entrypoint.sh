@@ -4,7 +4,11 @@ set -Eeuo pipefail
 # Include common functions and environment variable mappings
 . common.sh
 
-export SESSION_DB_URI="postgresql://$(Encode "$DB_USER"):$(Encode "$DB_PASSWORD")@$(Encode "$DB_HOST"):$(Encode "$DB_PORT")/$(Encode "$DB_NAME")"
+# Configuration for `session_db` (https://github.com/OCA/server-tools)
+if [[ "${DB_NAME:-False}" != "False" && -z "${SESSION_DB_URI:-}" ]]; then
+  SESSION_DB_URI="postgresql://$(Encode "$DB_USER"):$(Encode "$DB_PASSWORD")@$(Encode "$DB_HOST"):$(Encode "$DB_PORT")/$(Encode "$DB_NAME")"
+  export SESSION_DB_URI
+fi
 
 function SetDockerFileStorePermissions() {
   # Make the Odoo user the owner of the filestore
@@ -32,7 +36,7 @@ function DatabaseEmpty() {
 }
 
 function InstallOdoo() {
-  if [[ -z $DB_NAME || $DB_NAME == "False" ]]; then
+  if [[ "${DB_NAME:-False}" == "False" ]]; then
     echo "Database name not provided. Exiting."
     exit 1
   fi
@@ -41,16 +45,16 @@ function InstallOdoo() {
     return
   fi
   local flags=()
-  if [[ ${NO_DEMO:-"True"} == "True" ]]; then
+  if [[ ${WITHOUT_DEMO:-"True"} == "True" ]]; then
     flags+=(--without-demo all)
   fi
   echo "Initializing database '$DB_NAME'...";
-  WithCorrectUser "$ODOO_BIN" -c "$ODOO_RC" -d "$DB_NAME" -i "$MODULES" --stop-after-init --no-http "${flags[@]}"
+  WithCorrectUser "$ODOO_BIN" -c "$ODOO_RC" -d "$DB_NAME" -i "${MODULES:-base}" --stop-after-init --no-http "${flags[@]}"
   echo "Initialization complete."
 }
 
 function UpdateOdoo() {
-  if [[ -z $DB_NAME || $DB_NAME == "False" ]]; then
+  if [[ "${DB_NAME:-False}" == "False" ]]; then
     echo "Database name not provided; exiting."
     exit 1
   fi
@@ -78,7 +82,7 @@ function PerformMaintenance() {
   fi
 }
 
-if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+if [[ "${DOCKER:-"false"}" == "true" ]]; then
   SetDockerFileStorePermissions
 fi
 

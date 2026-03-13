@@ -14,8 +14,7 @@ ENV \
   ODOO_RC=/odoo/odoo.cfg \
   DOCKER=false \
   ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/custom \
-  PATH=/odoo/bin:$PATH \
-  MODULES=base
+  PATH=/odoo/bin:$PATH
 
 COPY ./install /tmp/install
 RUN set -x \

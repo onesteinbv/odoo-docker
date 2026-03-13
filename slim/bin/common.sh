@@ -5,12 +5,12 @@ export PGHOST="$DB_HOST"
 export PGPORT="$DB_PORT"
 export PGUSER="$DB_USER"
 export PGPASSWORD="$DB_PASSWORD"
-if [[ -n "$DB_NAME" && "$DB_NAME" != "False" ]]; then
+if [[ "${DB_NAME:-False}" != "False" ]]; then
   export PGDATABASE="$DB_NAME"
 fi
 
 function WithCorrectUser() {
-  if [[ -n "$DOCKER" && "$DOCKER" == "true" ]]; then
+  if [[ "${DOCKER:-"false"}" == "true" ]]; then
     gosu odoo "$@"
   else
     "$@"
