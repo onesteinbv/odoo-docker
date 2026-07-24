@@ -25,19 +25,22 @@ RUN rm -rf /odoo/wheels
 
 The entrypoint checks for the presence of a script, but are optional.
 
-- `/odoo/scripts/run.sh`: Runs after installing or updating the Odoo database
+- `/odoo/scripts/pre.sh`: Runs before updating the Odoo database
+- `/odoo/scripts/post.sh`: Runs after updating / installing the Odoo database
 
 ## Variables
 
 ### `$MODE` parameter
 
- - `Install` - installs modules in `MODULES`, runs the maintenance script (`run.sh`),
-   then quits the container. This can be done in an empty database or when it doesn't exist yet.
- - `Update` - updates installed modules, runs the maintenance script (`run.sh`), then
-   quits the container. Checks if the database exists.
+ - `Install` - installs modules in `MODULES`, runs `post.sh` (if present), then
+   quits the container. This can be done in an empty database or when it doesn't exist yet.
+ - `Update` - runs `pre.sh` (if present), updates installed modules, runs `post.sh`
+   (if present), then quits the container. Checks if the database exists.
  - `Run` - does no updating, simply runs Odoo.
- - `InstallAndRun` - installs modules (if needed), updates, runs the maintenance
-   script (`run.sh`), then runs Odoo. This is the **default** mode.
+ - `InstallAndRun` - installs modules (if needed), runs `pre.sh` (if present), updates,
+   runs `post.sh` (if present), then runs Odoo. This is the **default** mode.
+
+The `Install` mode does not run `pre.sh` because no update step is executed.
 
 ### Database environment
 
