@@ -75,13 +75,23 @@ function UpdateOdoo() {
   echo "Update complete."
 }
 
-function PerformMaintenance() {
-  if [ -f "/odoo/scripts/run.sh" ]; then
-    echo "Running maintenance script...";
-    WithCorrectUser /odoo/scripts/run.sh
-    echo "Maintenance script complete."
+function PreMaintenance() {
+  if [ -f "/odoo/scripts/pre.sh" ]; then
+    echo "Running pre-maintenance script...";
+    WithCorrectUser /odoo/scripts/pre.sh
+    echo "Pre-maintenance script complete."
   else
-    echo "Maintenance script not found; skipping maintenance.";
+    echo "Pre-maintenance script not found; skipping.";
+  fi
+}
+
+function PostMaintenance() {
+  if [ -f "/odoo/scripts/post.sh" ]; then
+    echo "Running post-maintenance script...";
+    WithCorrectUser /odoo/scripts/post.sh
+    echo "Post-maintenance script complete."
+  else
+    echo "Post-maintenance script not found; skipping.";
   fi
 }
 
@@ -96,7 +106,7 @@ case ${MODE:="InstallAndRun"} in
     echo "Installing Odoo..."
     CreateConfigFile
     InstallOdoo
-    PerformMaintenance
+    PostMaintenance
     echo "Complete; exiting."
     ;;
 
@@ -104,8 +114,9 @@ case ${MODE:="InstallAndRun"} in
     WaitForPostgres
     echo "Updating Odoo..."
     CreateConfigFile
+    PreMaintenance
     UpdateOdoo
-    PerformMaintenance
+    PostMaintenance
     echo "Complete; exiting."
     ;;
 
@@ -121,8 +132,9 @@ case ${MODE:="InstallAndRun"} in
     echo "Installing and running Odoo..."
     CreateConfigFile
     InstallOdoo
+    PreMaintenance
     UpdateOdoo
-    PerformMaintenance
+    PostMaintenance
     WithCorrectUser "$@"
     ;;
 
