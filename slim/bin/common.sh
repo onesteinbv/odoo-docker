@@ -26,9 +26,12 @@ function WaitForPostgres() {
 }
 
 function CreateConfigFile() {
-  # Create a config file.
+  # Create a config file by rendering the main template and the backwards-
+  # compatibility template (compat.cfg.tmpl) together in a single dockerize
+  # call. The compat template is self-guarded with {{ if }} blocks so it
+  # produces no output when legacy fs.storage variables are not set.
   echo "Creating Odoo configuration file...";
-  WithCorrectUser dockerize -template /templates/odoo.cfg.tmpl:/odoo/odoo.cfg
+  WithCorrectUser dockerize -template /templates/odoo.cfg.tmpl -template /templates/compat.cfg.tmpl > /odoo/odoo.cfg
 
   # Check that a config file was created.
   if [ ! -e /odoo/odoo.cfg ]; then

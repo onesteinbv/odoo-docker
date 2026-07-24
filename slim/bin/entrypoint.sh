@@ -4,6 +4,9 @@ set -Eeuo pipefail
 # Include common functions and environment variable mappings
 . common.sh
 
+# Apply backwards compatibility shims (legacy MODE aliases, etc.)
+. compat.sh
+
 # Configuration for `session_db` (https://github.com/OCA/server-tools)
 if [[ "${DB_NAME:-False}" != "False" && -z "${SESSION_DB_URI:-}" ]]; then
   SESSION_DB_URI="postgresql://$(Encode "$DB_USER"):$(Encode "$DB_PASSWORD")@$(Encode "$DB_HOST"):$(Encode "$DB_PORT")/$(Encode "$DB_NAME")"
