@@ -34,7 +34,7 @@ function DatabaseExists() {
 
 function DatabaseEmpty() {
     local result
-    result="$(psql -XtA -c "SELECT 1 FROM pg_catalog.pg_tables WHERE schemaname = 'public' LIMIT 1;")"
+    result="$(psql -XtA -c "SELECT 1 FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename <> 'spatial_ref_sys' LIMIT 1;")"
     [[ "$result" != "1" ]]
 }
 
