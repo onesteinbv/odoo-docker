@@ -43,14 +43,14 @@ function LegacyDatabaseUserConfigured() {
     return 1
   fi
   if [[ -z "${DB_CLIENT_USER:-}" || -z "${DB_CLIENT_PASSWORD:-}" ]]; then
-    echo "Both DB_CLIENT_USER and DB_CLIENT_PASSWORD must be set to enable legacy database-user setup."
+    echo "COMPAT: Both DB_CLIENT_USER and DB_CLIENT_PASSWORD must be set to enable legacy database-user setup."
     exit 1
   fi
   return 0
 }
 
 function EnsureLegacyDatabaseUser() {
-  echo "Ensuring legacy database user '$DB_CLIENT_USER' exists..."
+  echo "COMPAT: Ensuring legacy database user '$DB_CLIENT_USER' exists..."
   psql -U "$DB_USER" -d postgres \
     -v client_user="$DB_CLIENT_USER" \
     -v client_password="$DB_CLIENT_PASSWORD" <<'SQL' >/dev/null
@@ -74,7 +74,7 @@ SQL
 }
 
 function GrantLegacyDatabasePrivileges() {
-  echo "Granting legacy database-user privileges..."
+  echo "COMPAT: Granting legacy database-user privileges..."
   psql -U "$DB_USER" -d "$DB_NAME" \
     -v client_user="$DB_CLIENT_USER" \
     -v db_user="$DB_USER" \
