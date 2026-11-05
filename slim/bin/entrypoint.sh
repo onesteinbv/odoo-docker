@@ -107,7 +107,7 @@ SQL
 
 function LegacyExitIfDatabaseInitialized() {
   if DatabaseExists && ! DatabaseEmpty; then
-    echo "Database '$DB_NAME' already exists and is not empty. Exiting."
+    echo "COMPAT: Database '$DB_NAME' already exists and is not empty. Exiting."
     exit 0
   fi
 }
