@@ -105,6 +105,13 @@ WHERE table_schema = 'public'
 SQL
 }
 
+function LegacyExitIfDatabaseInitialized() {
+  if DatabaseExists && ! DatabaseEmpty; then
+    echo "Database '$DB_NAME' already exists and is not empty. Exiting."
+    exit 0
+  fi
+}
+
 function InstallOdoo() {
   if [[ "${DB_NAME:-False}" == "False" ]]; then
     echo "Database name not provided. Exiting."
@@ -173,6 +180,7 @@ case ${MODE:="InstallAndRun"} in
     echo "Installing Odoo..."
     CreateConfigFile
     if LegacyDatabaseUserConfigured; then
+      LegacyExitIfDatabaseInitialized
       EnsureLegacyDatabaseUser
     fi
     InstallOdoo
@@ -204,13 +212,7 @@ case ${MODE:="InstallAndRun"} in
     WaitForPostgres
     echo "Installing and running Odoo..."
     CreateConfigFile
-    if LegacyDatabaseUserConfigured; then
-      EnsureLegacyDatabaseUser
-    fi
     InstallOdoo
-    if LegacyDatabaseUserConfigured; then
-      GrantLegacyDatabasePrivileges
-    fi
     PreMaintenance
     UpdateOdoo
     PostMaintenance
